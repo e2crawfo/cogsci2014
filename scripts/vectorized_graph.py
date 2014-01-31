@@ -9,12 +9,6 @@ def semantic_network(n, seed=1):
     G.remove_edges_from(G.selfloop_edges())
     G = nx.DiGraph(G)
 
-    print G
-    print "Max out: ", max(G.out_degree(G.nodes_iter()).values())
-    print G.out_degree(G.nodes_iter())
-    print "Max in: ", max(G.in_degree(G.nodes_iter()).values())
-    print G.in_degree(G.nodes_iter())
-
     return G
 
 def draw_semantic_network(G, edge_labels=None):
@@ -82,27 +76,44 @@ def set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors):
     nx.set_edge_attributes(G, 'weight', weight_dict)
     return weight_dict
 
-def build_semantic_network(D, N, seed=1, draw=False):
-    random.seed(seed)
-    G = semantic_network(N, seed=seed)
+class VectorizedGraph(object):
+    def __init__(self, D, N, seed=1, draw=False):
+        random.seed(seed)
+        G = semantic_network(N, seed=seed)
 
-    id_vectors = make_id_vectors(G, D)
+        id_vectors = make_id_vectors(G, D)
 
-    edge_vectors = make_edge_vectors(G, D)
+        edge_vectors = make_edge_vectors(G, D)
 
-    hrr_vectors = make_hrr_vectors(G, id_vectors, edge_vectors)
-    weight_dict = set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors)
+        hrr_vectors = make_hrr_vectors(G, id_vectors, edge_vectors)
+        weight_dict = set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors)
 
-    if draw:
-        draw_semantic_network(G, edge_labels=weight_dict)
-        plt.show()
+        if draw:
+            draw_semantic_network(G, edge_labels=weight_dict)
+            plt.show()
 
-    return hrr_vectors, id_vectors, edge_vectors, G
+        self.hrr_vectors = hrr_vectors
+        self.id_vectors = id_vectors
+        self.edge_vectors = edge_vectors
+        self.G = G
+
+    def training_schedule(training_time):
+        return ()
+
+    def edge_testing_schedule(testing_time, num_tests):
+        edges = random.sample(list(G.edges_iter(data=True)), num_tests)
+        correct_vectors = [hrr_vectors[v] for u,v,d in edges]
+        testing_vectors = [hrr_vectors[u].convolve(~edge_vectors[d['index']]) for u,v,d in edges]
+        testing_vectors = map(lambda x: x.v, testing_vectors)
+
+    def path_testing_schedule(testing_time, num_tests, path_length):
+        return ()
+
 
 if __name__ == '__main__':
     seed = 100
     D = 512
     N = 30
 
-    build_semantic_network(D, N, seed, draw=True)
+    V = VectorizedGraph(D, N, seed, draw=True)
 

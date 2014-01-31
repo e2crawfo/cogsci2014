@@ -24,7 +24,7 @@ def build_learning_cleanup(dim, num_vectors, neurons_per_vector,
 def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
                       ensemble_params, learning_rate, oja_scale, encoders=None,
                       pre_decoders=None, use_oja=True, pre_tau=0.03, post_tau=0.03,
-                      end_time=None):
+                      end_time=None, learn=None):
 
     NperE = NperD * DperE
     dim = DperE * num_ensembles
@@ -88,7 +88,7 @@ def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
         if use_oja:
             oja_rule = OJA(pre_tau=pre_tau, post_tau=post_tau,
                             learning_rate=learning_rate, oja_scale=oja_scale,
-                            end_time=end_time)
+                            end_time=end_time, learn=learn)
 
         conn = nengo.Connection(pre.neurons, cleanup.neurons,
                                 transform=connection_weights, learning_rule=oja_rule)
