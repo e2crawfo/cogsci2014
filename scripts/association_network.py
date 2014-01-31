@@ -23,15 +23,15 @@ class LearnableAssociationNetwork(object):
         self.model = None
         self.parameters = None
 
-    def set_parameters(p):
+    def set_parameters(self, p):
         self.parameters = p
 
-    def set_vectorized_graph(vg):
+    def set_vectorized_graph(self, vg):
         self.vectorized_graph = vg
 
     def build(self):
         if self.parameters is None:
-            print "Can't build, parameters not set")
+            print "Can't build, parameters not set"
             return
 
         self._build(**self.parameters.__dict__)
@@ -39,15 +39,20 @@ class LearnableAssociationNetwork(object):
     def _build(self, seed, dim, DperE, NperD, cleanup_n, cleanup_params, ensemble_params,
                   oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate, **kwargs):
 
+        num_ensembles = int(dim / DperE)
+        NperE = NperD * DperE
+
         print "Building..."
         model = nengo.Model("Learn cleanup", seed=seed)
 
         def make_func(obj, funcname):
             def g(t):
-                return get_attr(obj, funcname)(t)
+                return getattr(obj, funcname)(t)
             return g
 
         # ----- Make Input -----
+        self.address_func = lambda x: np.zeros(dim)
+        self.stored_func = lambda x: np.zeros(dim)
         address_input = nengo.Node(output=make_func(self, "address_func"))
         stored_input = nengo.Node(output=make_func(self, "stored_func"))
 
@@ -59,9 +64,10 @@ class LearnableAssociationNetwork(object):
         pre_ensembles, pre_decoders, pre_connections = \
                 build_cleanup_oja(model, address_input, cleanup, DperE, NperD, num_ensembles,
                                   ensemble_params, oja_learning_rate, oja_scale,
-                                  end_time=end_time, learn=make_func(self, "learn_func"))
+                                  learn=make_func(self, "learn_func"))
 
-        output_ensembles, error_ensembles = build_cleanup_pes(cleanup, stored_input, DperE, NperD, num_ensembles, pes_learning_rate)
+        output_ensembles, error_ensembles = \
+                build_cleanup_pes(cleanup, stored_input, DperE, NperD, num_ensembles, pes_learning_rate)
 
         gate = nengo.Node(output=make_func(self, "gate_func"))
         for ens in error_ensembles:
@@ -89,9 +95,10 @@ class LearnableAssociationNetwork(object):
         self.learn_func = lambda x: True
 
         print "Learning..."
+        print self.parameters.__dict__
 
-        self.simulator = nengo.Simulator(model, dt=0.001)
-        self.simulator = sim.run(sim_time)
+        self.simulator = nengo.Simulator(self.model, dt=0.001)
+        self.simulator.run(sim_length)
 
         self.has_learned = True
 
@@ -158,16 +165,18 @@ class LearnableAssociationNetwork(object):
                       for conn in output_connections}
 
         with open(fname, 'wb') as f:
-            pickle.dump((weights, decoders, self.vectorized_graph), f)
+            pickle.dump((self.parameters, weights, decoders, self.vectorized_graph), f)
 
 
     def load_learned_data(self, fname):
         try:
             with open(fname, 'rb') as f:
                 ret = pickle.load(f)
-                self.oja_connection_weights = ret[0]
-                self.pes_decoders = ret[1]
-                self.vectorized_graph = ret[2]
+                self.parameters = ret[0]
+                self.build()
+                self.oja_connection_weights = ret[1]
+                self.pes_decoders = ret[2]
+                self.vectorized_graph = ret[3]
                 self.has_learned = True
                 self.learning_loaded = True
         except Exception as E:

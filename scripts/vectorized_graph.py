@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from mytools import hrr
+from mytools import hrr, nf
 import random
 
 def semantic_network(n, seed=1):
@@ -92,23 +92,54 @@ class VectorizedGraph(object):
             draw_semantic_network(G, edge_labels=weight_dict)
             plt.show()
 
+        self.num_vectors = N
         self.hrr_vectors = hrr_vectors
         self.id_vectors = id_vectors
         self.edge_vectors = edge_vectors
         self.G = G
 
-    def training_schedule(training_time):
-        return ()
+    def training_schedule(self, training_time):
+        address_gens = [nf.output(100, True, self.id_vectors[n].v, False)
+                        for n in self.G.nodes_iter()]
+        stored_gens = [nf.output(100, True, self.hrr_vectors[n].v, False)
+                        for n in self.G.nodes_iter()]
 
-    def edge_testing_schedule(testing_time, num_tests):
-        edges = random.sample(list(G.edges_iter(data=True)), num_tests)
+        address_times = [training_time] * self.num_vectors
+        stored_times = [training_time] * self.num_vectors
+
+        address_func = nf.make_f(address_gens, address_times)
+        stored_func = nf.make_f(stored_gens, stored_times)
+
+        sim_time = sum(address_times)
+
+        return (sim_time, address_func, stored_func)
+
+
+    def edge_testing_schedule(self, testing_time, num_tests):
+        edges = random.sample(list(self.G.edges_iter(data=True)), num_tests)
+
+        correct_vectors = [self.hrr_vectors[v].v for u,v,d in edges]
+
+        testing_vectors = [self.hrr_vectors[u].convolve(~self.edge_vectors[d['index']])
+                           for u,v,d in edges]
+        testing_vectors = map(lambda x: x.v, testing_vectors)
+
+        testing_gens = [nf.output(100, True, tv, False) for tv in testing_vectors]
+        testing_times = [testing_time] * self.num_vectors
+        testing_func = nf.make_f(testing_gens, testing_times)
+
+        return (sim_time, testing_func, correct_vectors)
+
+
+    def path_testing_schedule(self, testing_time, num_tests, path_length):
+        edges = random.sample(list(self.G.edges_iter(data=True)), num_tests)
+
         correct_vectors = [hrr_vectors[v] for u,v,d in edges]
+
         testing_vectors = [hrr_vectors[u].convolve(~edge_vectors[d['index']]) for u,v,d in edges]
         testing_vectors = map(lambda x: x.v, testing_vectors)
 
-    def path_testing_schedule(testing_time, num_tests, path_length):
-        return ()
-
+        return (sim_time, address_func, correct_vectors)
 
 if __name__ == '__main__':
     seed = 100
