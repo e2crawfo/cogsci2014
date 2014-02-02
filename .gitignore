@@ -66,12 +66,12 @@ nosetests.xml
 *.swo
 
 #Directories
-results/
+results/*
 !results/README.md
-plots/
+plots/*
 !plots/README.md
-learned_networks/
+learned_networks/*
 !learned_networks/README.md
-log/
+log/*
 !log/README.md
 
