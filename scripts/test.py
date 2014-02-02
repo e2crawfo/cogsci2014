@@ -4,7 +4,11 @@ import pickle
 from association_network import LearnableAssociationNetwork, Parameters
 from vectorized_graph import VectorizedGraph
 
+import logging
+
 def test_edges(in_fname, out_fname, testing_time, num_tests):
+    logging.basicConfig(filename='log/'+out_fname.split('/')[-1]+'.log')
+
     lan = LearnableAssociationNetwork()
     lan.load_learned_data(in_fname)
 
@@ -17,11 +21,15 @@ def test_edges(in_fname, out_fname, testing_time, num_tests):
 
     data = lan.extract_data()
     data['correct_vectors'] = correct_vectors
+    data['testing_time'] = testing_time
+    data['num_tests'] = num_tests
 
-    with open(out_fname, 'rb'):
-        pickle.dump(data)
+    with open(out_fname, 'wb') as f:
+        pickle.dump(data, f)
 
 def test_paths(in_fname, out_fname, testing_time, num_tests, path_length):
+    logging.basicConfig(filename='log/'+out_fname.split('/')[-1]+'.log')
+
     lan = LearnableAssociationNetwork()
     lan.load_learned_data(in_fname)
 
@@ -34,7 +42,9 @@ def test_paths(in_fname, out_fname, testing_time, num_tests, path_length):
 
     data = lan.extract_data()
     data['correct_vectors'] = correct_vectors
+    data['testing_time'] = testing_time
+    data['num_tests'] = num_tests
 
-    with open(out_fname, 'rb'):
-        pickle.dump(data)
+    with open(out_fname, 'wb') as f:
+        pickle.dump(data, f)
 

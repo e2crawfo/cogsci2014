@@ -64,3 +64,14 @@ nosetests.xml
 # vim
 *.swp
 *.swo
+
+#Directories
+results/
+!results/README.md
+plots/
+!plots/README.md
+learned_networks/
+!learned_networks/README.md
+log/
+!log/README.md
+

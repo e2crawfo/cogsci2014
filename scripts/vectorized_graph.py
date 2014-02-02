@@ -128,6 +128,8 @@ class VectorizedGraph(object):
         testing_times = [testing_time] * self.num_vectors
         testing_func = nf.make_f(testing_gens, testing_times)
 
+        sim_time = sum(testing_times)
+
         return (sim_time, testing_func, correct_vectors)
 
 

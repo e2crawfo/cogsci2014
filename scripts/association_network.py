@@ -4,6 +4,9 @@ import numpy as np
 from mytools import extract_probe_data, fh
 from build import build_learning_cleanup, build_cleanup_oja, build_cleanup_pes
 
+import logging
+logging.getLogger(__name__)
+
 class Parameters(object):
     def __init__(self, **kwds):
         self.__dict__.update(**kwds)
@@ -17,6 +20,7 @@ class LearnableAssociationNetwork(object):
         self.oja_connection_weights = None
         self.pes_decoders = None
         self.learned_loaded = False
+        self.simulator = None
 
         self.stored_func = lambda x: x
         self.address_func = lambda x: x
@@ -45,6 +49,8 @@ class LearnableAssociationNetwork(object):
         print "Building..."
         model = nengo.Model("Learn cleanup", seed=seed)
 
+        print self.parameters.__dict__
+
         def make_func(obj, funcname):
             def g(t):
                 return getattr(obj, funcname)(t)
@@ -53,6 +59,9 @@ class LearnableAssociationNetwork(object):
         # ----- Make Input -----
         self.address_func = lambda x: np.zeros(dim)
         self.stored_func = lambda x: np.zeros(dim)
+        self.gate_func = lambda x: [0.0]
+        self.learn_func = lambda x: True
+
         address_input = nengo.Node(output=make_func(self, "address_func"))
         stored_input = nengo.Node(output=make_func(self, "stored_func"))
 
@@ -95,7 +104,6 @@ class LearnableAssociationNetwork(object):
         self.learn_func = lambda x: True
 
         print "Learning..."
-        print self.parameters.__dict__
 
         self.simulator = nengo.Simulator(self.model, dt=0.001)
         self.simulator.run(sim_length)
@@ -103,7 +111,7 @@ class LearnableAssociationNetwork(object):
         self.has_learned = True
 
 
-    def test(self, sim_length, address_func, stored_func):
+    def test(self, sim_length, address_func):
         if not self.has_learned:
             print "Cannot test, hasn't learned yet."
             return None
@@ -113,7 +121,7 @@ class LearnableAssociationNetwork(object):
             return None
 
         if self.simulator is None:
-            self.simulator = nengo.Simulator(model, dt=0.001)
+            self.simulator = nengo.Simulator(self.model, dt=0.001)
 
             input_connections = [conn for conn in self.simulator.model.connections
                                     if conn.pre.label.startswith('pre')
@@ -134,7 +142,7 @@ class LearnableAssociationNetwork(object):
             self.simulator.reset()
 
         self.address_func = address_func
-        self.stored_func = stored_func
+        self.stored_func = lambda x: np.zeros(self.parameters.dim)
         self.gate_func = lambda x: [0.0]
         self.learn_func = lambda x: False
 
@@ -186,19 +194,15 @@ class LearnableAssociationNetwork(object):
 
 
     def extract_data(self):
-        simulator = self.simulator
-        address_input_p = self.address_input_p
-        stored_input_p = self.stored_input_p
-        pre_probes = self.pre_probes
-        cleanup_s = self.cleanup_s
-        output_probes = self.output_probes
 
-        t = simulator.trange()
-        address_input, _ = extract_probe_data(t, simulator, address_input_p)
-        stored_input, _ = extract_probe_data(t, simulator, stored_input_p)
-        pre_decoded, _ = extract_probe_data(t, simulator, pre_probes)
-        output_decoded, _ = extract_probe_data(t, simulator, output_probes)
-        cleanup_spikes, _ = extract_probe_data(t, simulator, cleanup_s, spikes=True)
+        simulator = self.simulator
+        t = self.simulator.trange()
+
+        address_input, _ = extract_probe_data(t, simulator, self.address_input_p)
+        stored_input, _ = extract_probe_data(t, simulator, self.stored_input_p)
+        pre_decoded, _ = extract_probe_data(t, simulator, self.pre_probes)
+        output_decoded, _ = extract_probe_data(t, simulator, self.output_probes)
+        cleanup_spikes, _ = extract_probe_data(t, simulator, self.cleanup_s, spikes=True)
 
         return dict(t=t, address_input=address_input, stored_input=stored_input,
                       pre_decoded=pre_decoded, cleanup_spikes=cleanup_spikes,
