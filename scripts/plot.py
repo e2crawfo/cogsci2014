@@ -1,7 +1,8 @@
 import pickle
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
-from mytools import nengo_plot_helper, apply_funcs
+from mytools import hrr, nengo_plot_helper, apply_funcs
 import analyze
 
 def edge_accuracy_plot(filenames, plot_fname, show=False):
@@ -45,7 +46,7 @@ def load_simulation_data(fname, data):
     else:
         for key in filedata:
             if key == 't':
-                filedata[key] += data[key][-1]
+                filedata[key] += data[key][-1] + data[key][1]
 
             if key in data:
                 data[key] = np.concatenate((data[key], filedata[key]), axis=0)
@@ -54,6 +55,7 @@ def load_simulation_data(fname, data):
 
 
 def simulation_plot(plot_fname, learning_fname='', testing_fname='', show=False):
+    mpl.rcParams['lines.linewidth'] = 0.7
 
     if not (learning_fname or testing_fname):
         print "Couldn't make plot, no filenames given"
@@ -67,7 +69,8 @@ def simulation_plot(plot_fname, learning_fname='', testing_fname='', show=False)
     if testing_fname:
         load_simulation_data(testing_fname, data)
 
-    num_plots = 6
+    num_plots = 5
+    fig = plt.figure()
 
     show_sims = 'vg' in data
     if show_sims:
@@ -79,25 +82,28 @@ def simulation_plot(plot_fname, learning_fname='', testing_fname='', show=False)
                 return h.compare(hrr.HRR(data=vec))
             return sim
 
-        address_sim_funcs = [make_sim_func(h) for h in vg.id_vectors]
-        stored_sim_funcs = [make_sim_func(h) for h in vg.hrr_vectors]
+        address_sim_funcs = [make_sim_func(vg.id_vectors[n]) for n in vg.G]
+        stored_sim_funcs = [make_sim_func(vg.hrr_vectors[n]) for n in vg.G]
 
     offset = num_plots * 100 + 10 + 1
 
     t = data['t']
 
-    ax, offset = nengo_plot_helper(offset, t, data['address_input'])
-    ax, offset = nengo_plot_helper(offset, t, data['stored_input'])
-    ax, offset = nengo_plot_helper(offset, t, data['pre_decoded'])
-    ax, offset = nengo_plot_helper(offset, t, data['cleanup_spikes'], spikes=True)
-    ax, offset = nengo_plot_helper(offset, t, data['output_decoded'])
+    ax, offset = nengo_plot_helper(offset, t, data['address_input'], yticks=[])
+    ax, offset = nengo_plot_helper(offset, t, data['stored_input'], yticks=[])
+    ax, offset = nengo_plot_helper(offset, t, data['pre_decoded'], yticks=[])
+    ax, offset = nengo_plot_helper(offset, t, data['cleanup_spikes'], spikes=True, yticks=[])
+    ax, offset = nengo_plot_helper(offset, t, data['output_decoded'], yticks=[], removex=show_sims)
 
     if show_sims:
         address_sims = apply_funcs(address_sim_funcs, data['address_input'])
-        ax, offset = nengo_plot_helper(offset, t, address_sims)
+        ax, offset = nengo_plot_helper(offset, t, address_sims, yticks=[-1,0,1])
+        plt.ylim((-1.1, 1.1))
 
         stored_sims = apply_funcs(stored_sim_funcs, data['output_decoded'])
-        ax, offset = nengo_plot_helper(offset, t, stored_sims)
+        ax, offset = nengo_plot_helper(offset, t, stored_sims, yticks=[-1,0,1], removex=True)
+        plt.ylim((-1.1, 1.1))
+        plt.axhline(y = 1.0, color='black', linestyle='--')
 
     plt.savefig(plot_fname)
 
