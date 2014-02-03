@@ -3,7 +3,7 @@
 from doit.tools import run_once
 
 import numpy as np
-from scripts import learn, test, plot, association_network
+from scripts import learn, test, plot, association_network, oja
 
 DOIT_CONFIG = {'verbosity': 2}
 
@@ -147,12 +147,52 @@ def task_example_simulation_plot():
             'targets':[plot_fname]
            }
 
-#def task_oja_plot():
-#    return {
-#            'actions':[],
-#            'filedep':[],
-#            'targets':[],
-#           }
+
+def task_oja():
+    dim = 64
+    DperE = 64
+    seed = 510
+
+    params = association_network.Parameters(
+                    seed=seed,
+                    dim=dim,
+                    DperE=DperE,
+                    NperD = 30,
+                    oja_scale = np.true_divide(7,1),
+                    oja_learning_rate = np.true_divide(1,50),
+                    pre_tau = 0.03,
+                    post_tau = 0.03,
+                    pes_learning_rate = np.true_divide(1,1),
+                    cleanup_params = {'radius':1.0,
+                                       'max_rates':[200],
+                                       'intercepts':[0.2]},
+                    ensemble_params = {'radius':1.0,
+                                       'max_rates':[400],
+                                       'intercepts':[0.1]},
+                    cleanup_n = 1,
+                    testing_time = 0.1,
+                    training_time = 2,
+                    encoder_similarity=0.3
+                    )
+
+    data_fname = "results/oja_results_D_%g" % dim
+    plot_fname = "plots/oja_plot_D_%g.pdf" % dim
+
+    yield {
+            'name':'sim_oja_D_%g' % dim,
+            'actions':[(oja.simulate, [data_fname, params])],
+            'file_dep':[],
+            'targets':[data_fname],
+            'uptodate':[run_once]
+           }
+
+
+    yield {
+            'name':'plot_oja_D_%g' % dim,
+            'actions':[(oja.plot, [data_fname, plot_fname, params])],
+            'file_dep':[data_fname],
+            'targets':[plot_fname],
+           }
 
     #def task_path_tests():
     #    for pr, lr, N in zip(path_results, learn_results, num_vectors):
