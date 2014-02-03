@@ -11,6 +11,10 @@ def semantic_network(n, seed=1):
 
     return G
 
+def simple_network(n, seed=1):
+    G = nx.cycle_graph(n, nx.DiGraph())
+    return G
+
 def draw_semantic_network(G, edge_labels=None):
     #pos = nx.spring_layout(G)
     pos = nx.circular_layout(G)
@@ -77,9 +81,13 @@ def set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors):
     return weight_dict
 
 class VectorizedGraph(object):
-    def __init__(self, D, N, seed=1, draw=False):
+    def __init__(self, D, N, seed=1, simple=False, draw=False):
         random.seed(seed)
-        G = semantic_network(N, seed=seed)
+
+        if simple:
+            G = simple_network(N, seed=seed)
+        else:
+            G = semantic_network(N, seed=seed)
 
         id_vectors = make_id_vectors(G, D)
 
@@ -100,9 +108,9 @@ class VectorizedGraph(object):
 
     def training_schedule(self, training_time):
         address_gens = [nf.output(100, True, self.id_vectors[n].v, False)
-                        for n in self.G.nodes_iter()]
+                        for n in self.G]
         stored_gens = [nf.output(100, True, self.hrr_vectors[n].v, False)
-                        for n in self.G.nodes_iter()]
+                        for n in self.G]
 
         address_times = [training_time] * self.num_vectors
         stored_times = [training_time] * self.num_vectors
@@ -114,9 +122,14 @@ class VectorizedGraph(object):
 
         return (sim_time, address_func, stored_func)
 
-
-    def edge_testing_schedule(self, testing_time, num_tests):
-        edges = random.sample(list(self.G.edges_iter(data=True)), num_tests)
+    def edge_testing_schedule(self, testing_time, num_tests, node_order=None):
+        if node_order is not None:
+            nodes = list(self.G)
+            nodes = [nodes[i] for i in node_order]
+            edges = [random.sample(list(self.G.edges_iter(n, data=True)), 1)[0] for n in nodes]
+        else:
+            edges = list(self.G.edges_iter(data=True))
+            edges = [edges[int(random.random() * len(edges))] for i in xrange(num_tests)]
 
         correct_vectors = [self.hrr_vectors[v].v for u,v,d in edges]
 

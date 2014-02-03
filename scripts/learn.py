@@ -5,7 +5,7 @@ import cutilities
 import logging
 import pickle
 
-def learn(data_fname, model_fname, params, num_vectors, training_time, log=True):
+def learn(data_fname, model_fname, params, num_vectors, training_time, simple=False):
 
     logging.basicConfig(filename='log/'+data_fname.split('/')[-1]+'.log')
 
@@ -18,7 +18,7 @@ def learn(data_fname, model_fname, params, num_vectors, training_time, log=True)
     lan = LearnableAssociationNetwork()
     lan.set_parameters(params)
 
-    vg = VectorizedGraph(params.dim, num_vectors, params.seed)
+    vg = VectorizedGraph(params.dim, num_vectors, params.seed, simple)
     lan.set_vectorized_graph(vg)
 
     lan.build()

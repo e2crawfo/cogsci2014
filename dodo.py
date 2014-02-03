@@ -87,6 +87,65 @@ def task_edge_simulation_plot():
                 'targets':[sp]
                }
 
+def task_example_simulation_plot():
+    N = 5
+    num_tests = N
+
+    dim = 32
+    DperE = 32
+    seed = 100
+    training_time = 1.0
+    testing_time = 0.5
+
+    params = association_network.Parameters(
+                    seed=seed,
+                    dim=dim,
+                    DperE=DperE,
+                    neurons_per_vector = 20,
+                    NperD = 30,
+                    oja_scale = np.true_divide(2,1),
+                    oja_learning_rate = np.true_divide(1,50),
+                    pre_tau = 0.03,
+                    post_tau = 0.03,
+                    pes_learning_rate = np.true_divide(1,1),
+                    cleanup_params = {'radius':1.0,
+                                       'max_rates':[400],
+                                       'intercepts':[0.1]},
+                    ensemble_params = {'radius':1.0,
+                                       'max_rates':[400],
+                                       'intercepts':[0.1]},
+                    )
+
+    learn_fname = 'example_learn_D_%g_N_%g' % (dim, N)
+    learn_data = 'results/' + learn_fname
+    learn_network = 'learned_networks/' + learn_fname
+
+    test_fname = 'results/example_test_D_%g_N_%g' % (dim, N)
+    plot_fname = 'plots/example_plot_D_%g_N_%g.pdf' % (dim, N)
+
+    yield  {
+            'name':'example_learn_D_%g_N_%g' % (dim, N),
+            'actions':[(learn.learn, [learn_data, learn_network, params, N, training_time, True])],
+            'file_dep':[],
+            'targets':[learn_data, learn_network],
+            'uptodate':[run_once]
+           }
+
+    test_order = [N-1] + range(N-1)
+    yield  {
+            'name':'example_test_D_%g_N_%g' % (dim, N),
+            'actions':[(test.test_edges, [learn_network, test_fname, testing_time, num_tests, test_order])],
+            'file_dep':[learn_network],
+            'targets':[test_fname]
+           }
+
+    yield  {
+            'name':'example_simulation_plot_D_%g_N_%g' % (dim, N),
+            'actions':[(plot.simulation_plot, [plot_fname, learn_data, test_fname])],
+            'file_dep':[test_fname, learn_data],
+            'targets':[plot_fname]
+           }
+
 #def task_oja_plot():
 #    return {
 #            'actions':[],
