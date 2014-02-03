@@ -143,7 +143,7 @@ class LearnableAssociationNetwork(object):
 
         self.address_func = address_func
         self.stored_func = lambda x: np.zeros(self.parameters.dim)
-        self.gate_func = lambda x: [0.0]
+        self.gate_func = lambda x: [1.0]
         self.learn_func = lambda x: False
 
         print "Testing..."
