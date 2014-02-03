@@ -77,11 +77,21 @@ We begin by presenting the outline of our technique for representing structured 
 \section{Structured Knowledge in Spiking Neurons}
 Want to encode knowledge in vectors, because we have a really good way of encoding and transforming vectors using neurons.
 
-\subsection{Vector Symbolic Architectures: Encoding Semantic Structure in Vectors}
-A Vector Symbolic Architecture constitutes a means of representing structured, symbolic knowledge in a vectorial format. Typically, we begin with a vocabulary of symbols that we want to encode in vectors. The VSA then assigns each symbol a vector. Relations between symbols are encoded by creating vectors for symbols \textit{in terms of} vectors for related symbols. For example, suppose we have a symbol \synset{dog}, and we want to encode the fact that dogs have the properties that they are members of packs, and that they are part of the class of canines. In a Vector Symbolic architecture, the vector for \synset{dog} would then be constructed as:
+\subsection{Encoding Structured Knowledge in Vectors}
+Vector Symbolic Architectures provide us with a means of representing structured knowledge in a vector format. When combined with the NEF, a principled way of representing vectors in spiking neurons, VSA's constitue a bridge between the previously disparate realms of spiking neural computation and large, structured knowledge bases. 
+
+To begin, we fix a dimension for our VSA. Previous investigations have shown that using vectors with 512 dimensions provides sufficient representational capacity to accomodate knowledge bases containing on the order of 60,000 items,  CITATION, roughly the size of an adult human vocabulary. Then, each symbol in the vocabulary is assigned two vectors. The first vector, which we will call $\xi$, also known as an ID-vector, acts as a unique identifier for that symbol. The second vector, which we will call $\eta$, also known as a structured vector, encodes the structured relations of the corresponding symbol with other symbols in the vocabulary. This structured vector is built up in terms of the ID-vectors of related symbols using the operations provided by the VSA. 
+
+Suppose, for example, that our vocabulary contains a symbol \textbf{dog}, and we would like the structured vector for dog to encode two facts about dogs, namely that they are members of packs, and that they are canines. Using the VSA operations of \textit{binding} ($\circledast$) and \textit{superposition} ($+$), the structured vector for \textbf{dog} is given by:
 \begin{align}
-\mathbf{dog} = \mathbf{isA} \circledast \mathbf{canine} + \mathbf{partOf} \circledast \mathbf{pack}\label{eqn:dog-sem}
+  \mathbf{dog} = \mathbf{isA} \circledast \mathbf{canine_{ID}} + \mathbf{partOf} \circledast \mathbf{pack_{ID}}\label{eqn:dog-sem}
 \end{align}
+
+In general, for each relation belonging to a symbol we want to represent, the structured vector contains a term with the relation-type vector bound to the ID-vector for the target of the relation. All these terms are then summed up, to give a concise representation of the relations belonging to that symbol. We will now explain the VSA operations to show why such a representation is useful.
+
+Binding and superposition can roughly be thought of as a vector equivalent of the standard arithmetic operations of multiplication and addition, respectively. Indeed, they generally obey the same rules; for example, binding is associative, commutative, and distributes over superposition, similar to multiplication. 
+
+
 The operations used here deserve some elucidation. In a VSA, each symbol to be represented is randomly assigned a high-dimensional vector. Two core operations are provided, each of which takes two vectors as input and returns a third. \textit{Binding} ($\circledast$) two vectors returns a third vector that is \textit{disimilar} to both of the original vectors. The \textit{superposition} ($+$) of two vectors returns a third vector that is \textit{similar} to both of the original vectors. 
 
 One popular choice for a VSA is known as Holographic Reduced Representation. HRRs employ a circular convolution operation for binding, and vector addition for superposition. The approximate inverse of circular convolution is a simple permutation of the elements in a vector. HRRs stand out from other VSA's because they have the unique and desirable propery that the vectors constructed in terms of the binding operations have the same dimensionality as their constituent vectors; for example, each of the vectors on the right-hand side of equation EQREF has the same dimensionality as the dog vector. This permits large and deeply hierarchical structured knowledge bases to be stored in this format with the dimensionality of the vectors undergoing a combinatorial explosion.
