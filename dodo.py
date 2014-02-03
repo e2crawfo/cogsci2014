@@ -7,13 +7,13 @@ from scripts import learn, test, plot, association_network
 
 DOIT_CONFIG = {'verbosity': 2}
 
-dim = 8
-DperE = 8
+dim = 32
+DperE = 32
 seed = 100
-num_vectors = [1,2,3,4,5]
+num_vectors = range(6,11)
 training_time = 1.0
 testing_time = 0.5
-num_tests = 3
+num_tests = 5
 path_length = 2
 
 params = association_network.Parameters(
@@ -63,18 +63,19 @@ def task_edge_tests():
                }
 
 def task_edge_accuracy_plot():
+    edge_acc_plot = 'plots/edge_acc_plot_D_%g.pdf' % (dim)
     return {
-            'actions':[(plot.edge_accuracy_plot, [edge_results])],
+            'actions':[(plot.edge_accuracy_plot, [edge_results, edge_acc_plot])],
             'file_dep':edge_results,
-            'targets':['plots/edge_accuracy_plot.png']
+            'targets':[edge_acc_plot]
            }
 
-
 def task_edge_similarity_plot():
+    edge_sim_plot = 'plots/edge_sim_plot_D_%g.pdf' % (dim)
     return {
-            'actions':[(plot.edge_similarity_plot, [edge_results])],
+            'actions':[(plot.edge_similarity_plot, [edge_results, edge_sim_plot])],
             'file_dep':edge_results,
-            'targets':['plots/edge_similarity_plot.png']
+            'targets':[edge_sim_plot]
            }
 
 # plots of the learning and testing, so we can see what happened

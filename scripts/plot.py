@@ -2,16 +2,33 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from mytools import nengo_plot_helper, apply_funcs
+import analyze
 
-def edge_accuracy_plot(filenames):
+def edge_accuracy_plot(filenames, plot_fname, show=False):
 
-    data = {}
+    acc = []
+    indices = []
     for fn in filenames:
-        with open(fn, 'rb') as f:
-            data[fn] = pickle.load(f)
+        correct, data = analyze.analyze_edge_test_accuracy(fn)
+        acc.append(np.true_divide(correct, data['num_tests']))
+        indices.append(data['num_vectors'])
 
-def edge_similarity_plot(filenames):
-    pass
+    plt.plot(np.array(indices), np.array(acc))
+
+    plt.savefig(plot_fname)
+
+    if show:
+        plt.show()
+
+def edge_similarity_plot(filenames, plot_fname, show=False):
+    means = []
+    indices = []
+    for fn in filenames:
+        mean_sims, data = analyze.analyze_edge_test_similarity(fn)
+        means.append(np.mean(mean_sims))
+        indices.append(data['num_vectors'])
+
+    plt.plot(np.array(indices), np.array(means))
 
 def path_accuracy_plot(filenames):
     pass
