@@ -25,10 +25,9 @@ def analyze_edge_test_similarity(test_fname):
     for i in range(num_tests):
         output = data['output_decoded'][start_time+cushion:end_time, :]
         sim_func = make_sim_func(hrr.HRR(data=correct_vectors[i]))
-        sims = np.array([sim_func(hrr.HRR(data=vec)) for vec in output])
+        sims = np.array([sim_func(vec) for vec in output])
 
         means.append(np.mean(sims))
-        print means[-1]
 
         start_time = end_time
         end_time += testing_time
