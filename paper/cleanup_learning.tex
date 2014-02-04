@@ -74,29 +74,22 @@ The contributions of the current work are two-fold. First, we present a novel me
 
 We begin by presenting the outline of our technique for representing structured knowledge neurally, demonstrating why an efficient associative memory is required. We then present a technique showing how such a memory can be learned in a neuron-efficient manner. We conclude by showing the results of simulations conducted using this technique, to solve a task that emulates a child learning semantic structure.
 
-\section{Structured Knowledge in Spiking Neurons}
-Want to encode knowledge in vectors, because we have a really good way of encoding and transforming vectors using neurons.
+\section{Vector Encoding of Structured Knowledge}
+We begin by presenting a formalism that allows the encoding of large structured knowledge bases, such as a semantic network, in a vectorial format. When combined with the Neural Engineering Framework, a principled way of representing vectors in spiking neurons, this formalism will act as a bridge between the previously disparate realms of spiking neural computation and large, structured knowledge bases.
 
-\subsection{Encoding Structured Knowledge in Vectors}
-Vector Symbolic Architectures provide us with a means of representing structured knowledge in a vector format. When combined with the NEF, a principled way of representing vectors in spiking neurons, VSA's constitue a bridge between the previously disparate realms of spiking neural computation and large, structured knowledge bases. 
+\subsection{Holographic Reduced Representations}
+Holographic Reduced Representations (HRRs) are a type of Vector Symbolic Architecture (VSA). They provide us with a means of representing structured knowledge in a vector format. 
 
-To begin, we fix a dimension for our VSA. Previous investigations have shown that using vectors with 512 dimensions provides sufficient representational capacity to accomodate knowledge bases containing on the order of 60,000 items,  CITATION, roughly the size of an adult human vocabulary. Then, each symbol in the vocabulary is assigned two vectors. The first vector, which we will call $\xi$, also known as an ID-vector, acts as a unique identifier for that symbol. The second vector, which we will call $\eta$, also known as a structured vector, encodes the structured relations of the corresponding symbol with other symbols in the vocabulary. This structured vector is built up in terms of the ID-vectors of related symbols using the operations provided by the VSA. 
+To begin, we fix a dimension for our vectors. Previous investigations have shown that using 512-dimensional vectors provides sufficient representational capacity to accomodate knowledge bases containing on the order of 60,000 items,  CITATION, roughly the size of an adult human vocabulary. Then, each symbol in the vocabulary is assigned two vectors. The first vector is called an ID-vector, and acts as a unique identifier for the symbol it is assigned to. The second vector is an HRR that encodes the structured relations belonging to the symbol it is assigned to. This vector is built up in terms of ID-vectors corresponding to symbols that the current symbol is related to, using specialized operations specified by the HRR formalism.
 
-Suppose, for example, that our vocabulary contains a symbol \textbf{dog}, and we would like the structured vector for dog to encode two facts about dogs, namely that they are members of packs, and that they are canines. Using the VSA operations of \textit{binding} ($\circledast$) and \textit{superposition} ($+$), the structured vector for \textbf{dog} is given by:
+Suppose, for example, that our vocabulary contains a symbol \textbf{dog}, and we would like the structured vector for dog to encode two facts about dogs, namely that they are members of packs, and that they are canines. Using the HRR operations of \textit{circular convolution} ($\circledast$) and \textit{vector addition} ($+$), the HRR for \textbf{dog} is given by:
 \begin{align}
   \mathbf{dog} = \mathbf{isA} \circledast \mathbf{canine_{ID}} + \mathbf{partOf} \circledast \mathbf{pack_{ID}}\label{eqn:dog-sem}
 \end{align}
 
-In general, for each relation belonging to a symbol we want to represent, the structured vector contains a term with the relation-type vector bound to the ID-vector for the target of the relation. All these terms are then summed up, to give a concise representation of the relations belonging to that symbol. We will now explain the VSA operations to show why such a representation is useful.
+In general, for each relation belonging to a symbol we want to represent, the HRR contains a term with the relation-type vector circularly convolved with the ID-vector for the target of the relation. All these terms are then added, allowing all this relational information to be stored in a single vector. Additionally, the dog HRR in \eqref{eqn:dog-sem} has the same dimensionsionality as each of the vectors on the right-hand side of the equation. This unique feature of HRR's has a number of desirable consequences. For instance, any brain structures we build to manipulate HRR's can expect vectors of a specific dimensionality. More importantly, this prevents the size of the vectors from undergoing a combinatorial explosion as the depth of the knowledge structure increases, permitting the representation of deeply hierarchical structures. We will now address the HRR operations in more detail to show why such a representation is useful.
 
-Binding and superposition can roughly be thought of as a vector equivalent of the standard arithmetic operations of multiplication and addition, respectively. Indeed, they generally obey the same rules; for example, binding is associative, commutative, and distributes over superposition, similar to multiplication. 
-
-
-The operations used here deserve some elucidation. In a VSA, each symbol to be represented is randomly assigned a high-dimensional vector. Two core operations are provided, each of which takes two vectors as input and returns a third. \textit{Binding} ($\circledast$) two vectors returns a third vector that is \textit{disimilar} to both of the original vectors. The \textit{superposition} ($+$) of two vectors returns a third vector that is \textit{similar} to both of the original vectors. 
-
-One popular choice for a VSA is known as Holographic Reduced Representation. HRRs employ a circular convolution operation for binding, and vector addition for superposition. The approximate inverse of circular convolution is a simple permutation of the elements in a vector. HRRs stand out from other VSA's because they have the unique and desirable propery that the vectors constructed in terms of the binding operations have the same dimensionality as their constituent vectors; for example, each of the vectors on the right-hand side of equation EQREF has the same dimensionality as the dog vector. This permits large and deeply hierarchical structured knowledge bases to be stored in this format with the dimensionality of the vectors undergoing a combinatorial explosion.
-
-What makes this useful is that \textbf{dog} preserves information about its constituents; we can use a third operation, \textit{dereferencing}, to determine what a given query vector is bound to in \textbf{dog}. The dereferencing operation is performed by binding \textbf{dog} with the inverse of the query vector. As an example, imagine we want to extract the synset that the dog synset is related to via the \textbf{isA} relation type. We bind \textbf{dog} with $\overline{\mathbf{isA}}$, the inverse of the \textbf{isA} vector:
+What makes this useful is that \textbf{dog} preserves information about its constituents; we can use a third operation, \textit{deconvolution}, to determine what a given query vector is bound to in \textbf{dog}. The dereferencing operation is performed by peroforming circular convolution between \textbf{dog} with the inverse of the query vector. Continuing our previous example, if we want to extract the symbol that dog is related to via the \textbf{isA} relation type, circularly convolve \textbf{dog} with $\overline{\mathbf{isA}}$, the inverse of the \textbf{isA} vector with respect to the circular convolution operation:
 \begin{align}
 &\mathbf{dog} \circledast \overline{\mathbf{isA} }\notag\\
 &=(\mathbf{isA} \circledast \mathbf{canine} + \mathbf{partOf} \circledast \mathbf{pack}) \circledast \overline{\mathbf{isA} }\notag\\
@@ -107,6 +100,12 @@ Equation \eqref{eqn:unbind} shows that $\mathbf{dog \circledast \overline{isA}}$
  
 After this initial dereferencing, we must still determine how to remove the noise from the vector returned by the dereferencing operation. Looking again at equation \eqref{eqn:unbind}, we see that $\mathbf{dog \circledast \overline{isA}}$ is similar to \textbf{canine} since it consists of \textbf{dog} superposed with another vector, and is dissimilar to the rest of the constituent vectors (\textbf{pack}, \textbf{isA}, \textbf{partOf}) since they are related to $\mathbf{dog \circledast \overline{isA}}$ via the binding operation. A cleanup memory, which is assigned a vocabulary of vectors and is designed to take an input vector and return a clean version of the vector in its vocabulary which is closest to the input vector, is a potential solution to this denoising problem. However, we want our model to be able to traverse the full WordNet hierarchy, not just a single edge, and ID-vectors alone contain no structural information. So we need to have some way to move from the ID-vector for a synset to its semantic pointer. We can perform the both the denoising and mapping to semantic pointer in one step by using an associative cleanup memory rather than a pure cleanup memory, mapping each synset's ID-vector to its semantic pointer. In short, we take the noisy ID-vector that we get as a result of the dereferencing operation and feed it into this associative memory to obtain a clean version of the corresponding semantic pointer, which can then be used in further edge traversals.
 
+%Binding and superposition can roughly be thought of as a vector equivalent of the standard arithmetic operations of multiplication and addition, respectively. Indeed, they generally obey the same rules; for example, binding is associative, commutative, and distributes over superposition, similar to multiplication. 
+%
+%The operations used here deserve some elucidation. In a VSA, each symbol to be represented is randomly assigned a high-dimensional vector. Two core operations are provided, each of which takes two vectors as input and returns a third. \textit{Binding} ($\circledast$) two vectors returns a third vector that is \textit{disimilar} to both of the original vectors. The \textit{superposition} ($+$) of two vectors returns a third vector that is \textit{similar} to both of the original vectors. 
+%
+%One popular choice for a VSA is known as Holographic Reduced Representation. HRRs employ a circular convolution operation for binding, and vector addition for superposition. The approximate inverse of circular convolution is a simple permutation of the elements in a vector. 
+
 \subsection{Associative Memories}
 Because we are using circular convolution as our binding operator, the inverse is only approximate. In other words, when we extract a related concept from a vector such as dog, the resulting vector is only \textit{similar to} the input vector; the similarity between the correct vector and a vector obtained through unbinding is proportional to the number of superposed vectors in the vector that we unbinded from. In order to obtain a denoised, or clean, version of the desired vector, an associative memory is typically used. The associative memory stores all vectors in our vocabulary. When it recieves an input vector that is sufficiently similar to one it has previously seen, it output a clean version of that vector.
 
@@ -115,12 +114,12 @@ The statistics of similarity between vectors assigned to the symbols in our voca
 It still remains to find a method of obtaining vectors with these desirable properties. For this we use two principles: use high-dimensional vectors, and choose them randomly. In high dimensions, the average similarity of two randomly chosen vectors is 0, and the variance of the similarity shrinks as the dimension grows. For our purposes, 512 dimensional vectors usually suffices to store structured knowledge bases on the scale of a human vocabulary; see Chris Eliasmith's book for reasons.
 Moreover, in high dimensions, the variance of the similarity between an HRR and its source is greatly reduced. Figure FIGURE shows a histogram of such similarities. Clearly, HRRs are much more similar to their source than to any other vector in our vocabulary, assuming all vectors are chosen randomly.
 
-\subsection{Learning}
-In previous work CITATION, we showed that the above scheme, when combined with principles of neural representation and transformation, permits the storage and manipulation of the WordNet, a semantic network containing ~117,000 concepts, larger than the ~60,000 terms in the average adult vocabulary. Indeed, we showed that it is the only known technique that is sufficiently efficient in terms of neurons to encode a human-scale knowledge base while respecting known anatomical constraints. However, one significant hole in that story was that the neural associative memory that we employed was hand-coded; that is, the connection weights were determined offline, in a biologically implausible manner. In the remainder of the present paper, we directly address this shortcoming, and show how an associative memory indistinguishable from the 'hand-coded' memory used in the previous work can be learned online using biologically plausible learning rules. We apply our technique to solve a task that resembles, on an abstract level, a child learning relations between objects in its environment.
+%\subsection{Learning}
+%In previous work CITATION, we showed that the above scheme, when combined with principles of neural representation and transformation, permits the storage and manipulation of the WordNet, a semantic network containing ~117,000 concepts, larger than the ~60,000 terms in the average adult vocabulary. Indeed, we showed that it is the only known technique that is sufficiently efficient in terms of neurons to encode a human-scale knowledge base while respecting known anatomical constraints. However, one significant hole in that story was that the neural associative memory that we employed was hand-coded; that is, the connection weights were determined offline, in a biologically implausible manner. In the remainder of the present paper, we directly address this shortcoming, and show how an associative memory indistinguishable from the 'hand-coded' memory used in the previous work can be learned online using biologically plausible learning rules. We apply our technique to solve a task that resembles, on an abstract level, a child learning relations between objects in its environment.
 
-\section{Efficiently Learning Associations in Spiking Neurons}
 The remainder of this work addresses the question of learning an associative memory that retains the fundamental scaling properties of the handcoded memory. We begin by addressing a general method for representing and transforming vectors using spiking neurons, before showing how this technique can be put to use learning associative memories.
 
+\section{Learning Structured Knowledge in Spiking Neurons}
 \subsection{Neural Representation and Computation}
 The Neural Engineering Framework (NEF) is a set of methods for building biologically
 plausible models using principles for neural representation, computation and dynamics \citep{Eliasmith2003m}. 
@@ -167,7 +166,8 @@ where i indexes the neurons in group A and j indexes the neurons in B, f is any 
 
 It is worth noting that these representations and computations can be implemented to any desired precision by adding enough neurons. Specifically, the root mean-squared-error goes down as $\frac{1}{N}$ \citep{Eliasmith2003m}. One of the main concerns of this paper is to demonstrate that the operations required for representing human-scale lexical structure can be done with a reasonable number of neurons.
 
-\subsection{A Simple Algorithm}
+\subsection{Learning Associations in Spiking Neurons}
+\subsubsection{A Simple Algorithm}
 Our technique for learning associations is relatively simple. Under certain assumptions on the statistics of the input touched on earlier, the following algorithm implements the associative memory functionality:
 \begin{enumerate}
 \item Take the dot product of the input vector with each of the address vectors.
@@ -181,10 +181,10 @@ The neural equivalent of this algorithm features a layer of association neurons,
 
 A schematic diagram of the network that learns associations is shown in \fg~\ref{fig:schematic}. We impose several assumptions on the raw, pre-trained network that enable the scalable learning. First, we assume that the input population employs a relatively sparse representation; this increases the degree to which the activity of the neurons in the population is correlated with the vector that that population is representing at any given time, which, as we shall see, facilitates learning. Second, we assume that the association population employs a \textit{very} sparse representation such that only a few association neurons are active for any given input vector. Importantly, this intitial sparseness is general; roughly the same number of neurons should be active for any input vector, whether or not it is a vector we intend to store, and hence the initial state of the network is not biased towards any specific set of associations, and is equally well suited to learning any set of associations that it is trained on. The final contraint we place on the initial network is that the connection weights between the association population and the output population are very small; the effect is that in the early stages no activity in the association population is sufficient to elicit activity in the output population. We now outline methods by which connection weights in this network of spiking neurons are modified in response to input in order to produce a resource-efficient, robust associative memory.
 
-\subsection{Sparse Representation}
+\subsubsection{Sparse Representation}
 One key to our learning algorithm is the sparse representation in the association population. This ensures that for any input vector, only a few association neurons become active. Those active neurons will be the neurons ``assigned'' to the vector they are storing. This activity, in conjunction with biologically plausible learning rules that operate based on the activity of these neurons, changes both the afferent and efferent connection weights of these neurons, giving them the power to compute the required association.
 
-\subsection{Oja's Rule: Increasing Selectivity}
+\subsubsection{Oja's Rule: Increasing Selectivity}
 Reviewing once again the algorithm that our hand-coded memory employs, it becomes obvious that our goal in setting the afferent connection weights of the active neurons in association population is to make them more selective for the vector that activates them. One might question the wisdom of this, as the sparse representation ensures that the neurons are already fairly selective to the current input vector; that is the reason they are currently active. However, those active neurons will also respond to other vectors that we might try to store in our memory, which would be undesirable. Our goal here is to make these neurons selective for only the current input vector, as well as vectors that are noisy versions of the input vector (i.e. when we go to use the memory for cleanup/association), indicating that the vector shares a high-degree of similarity with the input vector.
 
 To effect this increase in similarity, we employ a normalized hebbian learning rule known as Oja's Rule. The ``normalized'' feature of the rule ensures that the connection weights are bounded. Unbounded growth in connection weights is a major shortcoming of hebbian learning in its simplest form. The weight-update equation employed by Oja's rule is:
@@ -193,17 +193,19 @@ To effect this increase in similarity, we employ a normalized hebbian learning r
 \end{align}
 where $x_i$ is the activity of the $i$th neuron in the input population, $y_j$ is the activity of the $j$th association neuron, $\alpha$ is a constant corresponding to the learning rate, and $\beta$ is a constant that is asymptotically proportional to $\sum_i w_{ij}^2$, the sum of squares for each row of the weight matrix. Because the neurons are spiking, the activities $x_i$ and $y_j$ are low-pass filtered versions of spike trains.
 
-Could show that one graph.. where on the first run the neuron is not selective, and on the second one it is
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{../plots/oja_plot_D_64.pdf}
+\caption{Oja's rule changes neural selectivity. A population of neurons representing a 64 dimensional vector is connected to a single association neuron. Training phase: connection weights between population and association neuron changed according to Oja's rule while population represents a training vector. Gray line shows similarity of input to the training vector, spike raster is the response of the association neuron. (Top) Before training. (Bottom) After training. The assocation neuron has become selective for training vector.}
+\label{fig:oja}
+\end{figure}
 
-\subsection{Prescribed Error Sensitivity: Storing Vectors in Connection Weights}
+\subsubsection{Prescribed Error Sensitivity: Storing Vectors in Connection Weights}
 Increasing selectivity of active neurons gets us part of the way; it effectively gives us a group of neurons that are only active for a specific stored vector as well as other vectors with high similarity. What we require from here is a way of using this selective activity to map to the desired output vector. For this we use a learning rule known as Prescribed Error Sensitivity (PES). CITATION macneil and eliasmith. 
 \begin{align}
 \Delta \omega_{ij} = \kappa \alpha_j \mathbf{e_j} \cdot \mathbf{E}a_i
 \end{align}
 where $\kappa$ is a scalar learning rate, $E$ is a vector giving the error that we want to minimize, and $a_i$ is the vector of activities of the association neurons. If run for long enough, this learning rule sets connection weights between currently active neurons and the output neurons such that whenever those association neurons are active again, the output population is interpreted as representing the correct stored vector. 
-
-\subsection{Scaling}
-The primary advantage of our method for encoding structured knowledge is its ability to scale up. Consequently, for the current work to count as an improvement, the scaling properties should be retained. However, the significant additional computation introduced by the learning rules currently prevents us from running simulations where the network learns to encode a semantic network on the scale of a human vocabulary. Instead, we demonstrate that our approach at least works on more modestly sized semantic networks, and present a theoretical argument suggesting that the number of neurons required will always been linear in the number of vectors we store. 
 
 \section{Simulations}
 
@@ -219,14 +221,19 @@ Due to the scale of the simulations, each vector is presented for only a short p
 
 
 \begin{figure*}[ht]
-%\begin{center}
+\begin{center}
 \includegraphics[width=\textwidth]{../diagrams/schematic.pdf}
-%\end{center}
+\end{center}
 \caption{Schematic diagram of association network. White rectangles indicate populations of spiking neurons, arrows indicate all-to-all connections between populations, and grey ellipses indicate learning rules applied to connections.}
 \label{fig:schematic}
 \end{figure*}
 
 \section{Discussion}
+
+\subsection{Scaling}
+The primary advantage of our method for encoding structured knowledge is its ability to scale up. Consequently, for the current work to count as an improvement, the scaling properties should be retained. However, the significant additional computation introduced by the learning rules currently prevents us from running simulations where the network learns to encode a semantic network on the scale of a human vocabulary. Instead, we demonstrate that our approach at least works on more modestly sized semantic networks, and present a theoretical argument suggesting that the number of neurons required will always been linear in the number of vectors we store. 
+
+\subsection{Future Work}
 The current study leaves a number of questions unanswered. Future work will investigate whether the learned memory can be mapped to brain structures. Moreover, work will be done to investigate the time course on which presentations to the network should occur, to adhere to data about the manner and rate in which children learn such relations. It would be interesting to see whether different time courses have consequences for what is ultimately learned by the memory. For instance, there is reason to expect such a memory to be able to account for interference effects; if a new item is learned while a similar item is still being recorded, it is a plausible hypothesis that, through Oja's rule, the new item will ``steal'' neurons from the incomplete item, rendering the incomplete item difficult or even impossible to access. This has been observed empirically CITATION. Further simulations will be required to investigate these intriguing questions.
 
 Provides certain self-correcting mechanism.
@@ -248,7 +255,7 @@ Role of neurogenesis, so we don't need a predetermined size of the cleanup pool.
 
 
 \section{Conclusion}
-Novel combination of synaptic plasticity and distributed vector representations. \textbf{I think this is really the selling point, and what should get the paper noticed}.
+Novel combination of synaptic plasticity and distributed vector representations. 
 
 \section{Acknowledgments}
 Funding for this work was provided by the National Science and Engineering Research Council of Canada, Canada Research Chairs, the Canadian Foundation for Innovation and the Ontario Innovation Trust.		
