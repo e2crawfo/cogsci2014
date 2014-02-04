@@ -3,6 +3,8 @@ import build
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from nengo.matplotlib import rasterplot
 from mytools import hrr, nf, fh, nengo_plot_helper, extract_probe_data
 import random
 import pickle
@@ -163,29 +165,43 @@ def _plot(data_fname, plot_fname, params, sims, sims_time, before_spikes,
     print "Plotting..."
 
     fig = plt.figure()
-    plt.rc('text', usetex=True)
-    plt.rc('axes', color_cycle=['gray'])
-
-    num_plots = 3
-
-    offset = num_plots * 100 + 10 + 1
+    plt.subplots_adjust(hspace=0.05)
+    #plt.rc('text', usetex=True)
+    mpl.rcParams['lines.linewidth'] = 1.5
+    mpl.rc('font', size=14)
 
     xticks = [2 * i * params.testing_time for i in range(4)]
 
-    ax, offset = nengo_plot_helper(offset, sims_time, sims, \
-                                   label=r'$Similarity$', yticks=[0,1])
-    plt.xticks(xticks)
-    ax.xaxis.set_ticklabels([])
+    time = before_time
+    spacing = 4
+    title_fontsize = 20
 
-    ax, offset = nengo_plot_helper(offset, before_time, before_spikes, yticks=[], spikes=True)
-    plt.xticks(xticks)
-    ax.xaxis.set_ticklabels([])
-    plt.ylabel(r'$Before\ Training$')
+    ax = plt.subplot(211)
+    ax_spike = ax.twinx()
+    ax.plot(sims_time, sims, color="Gray")
+    spikes = np.concatenate((np.zeros((time.size, spacing)), before_spikes), axis=1)
+    rasterplot(time, spikes, ax=ax_spike, color="Black")
 
-    ax, offset = nengo_plot_helper(offset, after_time, after_spikes, yticks=[], spikes=True)
-    plt.xlabel(r'$Time\ (s)$')
-    plt.ylabel(r'$After\ Training$')
-    plt.xticks(xticks)
+    ax.set_ylim((0.0, 1.05))
+    ax.set_ylabel(r'$Similarity$', fontsize=title_fontsize)
+    ax.set_yticks([0,1])
+    ax.set_xticks(xticks)
+    ax.xaxis.set_ticklabels([])
+    ax_spike.set_yticks([])
+
+    ax = plt.subplot(212)
+    ax_spike = ax.twinx()
+    ax.plot(sims_time, sims, color="Gray")
+    spikes = np.concatenate((np.zeros((time.size, spacing)), after_spikes), axis=1)
+    rasterplot(time, spikes, ax=ax_spike, color="Black")
+
+    ax.xaxis.set_tick_params(pad=8)
+    ax.set_xlabel(r'$Time\ (s)$', fontsize=title_fontsize)
+    ax.set_xticks(xticks)
+    ax.set_ylabel(r'$Similarity$', fontsize=title_fontsize)
+    ax.set_ylim((0.0, 1.05))
+    ax.set_yticks([0,1])
+    ax_spike.set_yticks([])
 
     plt.savefig(plot_fname)
 
