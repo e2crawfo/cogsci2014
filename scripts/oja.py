@@ -166,6 +166,7 @@ def _plot(data_fname, plot_fname, params, sims, sims_time, before_spikes,
 
     fig = plt.figure()
     plt.subplots_adjust(hspace=0.05)
+    plt.subplots_adjust(right=0.93, top=0.98, bottom=0.11, left=0.07, hspace=0.05)
     #plt.rc('text', usetex=True)
     mpl.rcParams['lines.linewidth'] = 1.5
     mpl.rc('font', size=14)
