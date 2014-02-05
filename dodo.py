@@ -3,22 +3,24 @@
 from doit.tools import run_once
 
 import numpy as np
+import copy
 from scripts import learn, test, plot, association_network, oja
 
 DOIT_CONFIG = {'verbosity': 2}
 
 dim = 32
 DperE = 32
+num_samples = 5
 seed = 100
-num_vectors = range(6,11)
+num_vectors = range(2,10)
 training_time = 1.0
 testing_time = 0.5
 num_tests = 5
 path_length = 2
 
 params = association_network.Parameters(
-                seed=seed,
                 dim=dim,
+                seed=seed,
                 DperE=DperE,
                 neurons_per_vector = 20,
                 NperD = 30,
@@ -35,37 +37,49 @@ params = association_network.Parameters(
                                    'intercepts':[0.1]},
                 )
 
-edge_results = ['results/edge_test_results_D_%g_N_%g' % (dim, N) for N in num_vectors]
-path_results = ['results/path_test_results_D_%g_N_%g_L_%g' % (dim, N, path_length) for N in num_vectors]
+run_configs = [(dim, N, s) for N in num_vectors for s in range(num_samples)]
+edge_results = ['results/edge_test_results_D_%g_N_%g_s_%g' % rc for rc in run_configs]
 
-learned_networks = ['learned_networks/learn_results_D_%g_N_%g' % (dim, N) for N in num_vectors]
-learn_results = ['results/learn_results_D_%g_N_%g' % (dim, N) for N in num_vectors]
+learned_networks = ['learned_networks/learn_results_D_%g_N_%g_s_%g' % rc for rc in run_configs]
+learn_results = ['results/learn_results_D_%g_N_%g_s_%g' % rc for rc in run_configs]
 
-edge_simulation_plots = ['plots/edge_simulation_plot_D_%g_N_%g.pdf' % (dim, N) for N in num_vectors]
+edge_simulation_plots = ['plots/edge_simulation_plot_D_%g_N_%g_s_%g.pdf' % rc for rc in run_configs]
 
 def task_learn():
-    for ln, lr, N in zip(learned_networks, learn_results, num_vectors):
+    for ln, lr, rc in zip(learned_networks, learn_results, run_configs):
+        cur_params = copy.deepcopy(params)
+        cur_params.seed = params.seed + rc[2]
         yield  {
-                'name':'learn_D_%g_N_%g' % (dim, N),
-                'actions':[(learn.learn, [lr, ln, params, N, training_time])],
+                'name':ln,
+                'actions':[(learn.learn, [lr, ln, cur_params, N, training_time])],
                 'file_dep':[],
                 'targets':[lr, ln],
                 'uptodate':[run_once]
                }
 
 def task_edge_tests():
-    for er, ln, N in zip(edge_results, learned_networks, num_vectors):
+    for er, ln in zip(edge_results, learned_networks):
         yield  {
-                'name':'edge_results_D_%g_N_%g' % (dim, N),
+                'name':er,
                 'actions':[(test.test_edges, [ln, er, testing_time, num_tests])],
                 'file_dep':[ln],
                 'targets':[er]
                }
 
+# plots of the learning and testing, so we can see what happened
+def task_edge_simulation_plot():
+    for sp, er, lr in zip(edge_simulation_plots, edge_results, learn_results):
+        yield  {
+                'name':sp,
+                'actions':[(plot.simulation_plot, [sp, lr, er])],
+                'file_dep':[er, lr],
+                'targets':[sp]
+               }
+
 def task_edge_accuracy_plot():
     edge_acc_plot = 'plots/edge_acc_plot_D_%g.pdf' % (dim)
     return {
-            'actions':[(plot.edge_accuracy_plot, [edge_results, edge_acc_plot])],
+            'actions':[(plot.edge_accuracy_plot, [edge_results, run_configs, edge_acc_plot])],
             'file_dep':edge_results,
             'targets':[edge_acc_plot]
            }
@@ -73,20 +87,11 @@ def task_edge_accuracy_plot():
 def task_edge_similarity_plot():
     edge_sim_plot = 'plots/edge_sim_plot_D_%g.pdf' % (dim)
     return {
-            'actions':[(plot.edge_similarity_plot, [edge_results, edge_sim_plot])],
+            'actions':[(plot.edge_similarity_plot, [edge_results, run_configs, edge_sim_plot])],
             'file_dep':edge_results,
             'targets':[edge_sim_plot]
            }
 
-# plots of the learning and testing, so we can see what happened
-def task_edge_simulation_plot():
-    for sp, er, lr, N in zip(edge_simulation_plots, edge_results, learn_results, num_vectors):
-        yield  {
-                'name':'edge_simulation_plot_D_%g_N_%g' % (dim, N),
-                'actions':[(plot.simulation_plot, [sp, lr, er])],
-                'file_dep':[er, lr],
-                'targets':[sp]
-               }
 
 def task_example_simulation_plot():
     N = 5
@@ -99,7 +104,6 @@ def task_example_simulation_plot():
     testing_time = 0.5
 
     params = association_network.Parameters(
-                    seed=seed,
                     dim=dim,
                     DperE=DperE,
                     neurons_per_vector = 20,
@@ -126,7 +130,7 @@ def task_example_simulation_plot():
 
     yield  {
             'name':'example_learn_D_%g_N_%g' % (dim, N),
-            'actions':[(learn.learn, [learn_data, learn_network, params, N, training_time, True])],
+            'actions':[(learn.learn, [learn_data, learn_network, params, N, training_time, seed, True])],
             'file_dep':[],
             'targets':[learn_data, learn_network],
             'uptodate':[run_once]
@@ -194,6 +198,7 @@ def task_oja():
             'targets':[plot_fname],
            }
 
+#path_results = ['results/path_test_results_D_%g_N_%g_L_%g' % (dim, N, path_length) for N in num_vectors]
     #def task_path_tests():
     #    for pr, lr, N in zip(path_results, learn_results, num_vectors):
     #        yield  {

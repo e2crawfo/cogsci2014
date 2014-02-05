@@ -2,34 +2,60 @@ import pickle
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from mytools import hrr, nengo_plot_helper, apply_funcs
+from mytools import hrr, nengo_plot_helper, apply_funcs, spike_sorter
 import analyze
 
-def edge_accuracy_plot(filenames, plot_fname, show=False):
+def edge_accuracy_plot(filenames, run_configs, plot_fname, show=False):
 
-    acc = []
-    indices = []
-    for fn in filenames:
+    correct_dict = {}
+
+    for fn, rc in zip(filenames, run_configs):
         correct, data = analyze.analyze_edge_test_accuracy(fn)
-        acc.append(np.true_divide(correct, data['num_tests']))
-        indices.append(data['num_vectors'])
+        acc = np.true_divide(correct, data['num_tests'])
+        num_vectors = rc[1]
+        if num_vectors in correct_dict:
+            correct_dict[num_vectors].append(acc)
+        else:
+            correct_dict[num_vectors] = []
 
-    plt.plot(np.array(indices), np.array(acc))
+    indices = correct_dict.keys()
+    means = [np.mean(correct_dict[nv]) for nv in correct_dict.keys()]
+
+    fig = plt.figure()
+
+    plt.plot(np.array(indices), np.array(means))
+
+    plt.ylim((0.0, 1.1))
 
     plt.savefig(plot_fname)
 
     if show:
         plt.show()
 
-def edge_similarity_plot(filenames, plot_fname, show=False):
-    means = []
-    indices = []
-    for fn in filenames:
+def edge_similarity_plot(filenames, run_configs, plot_fname, show=False):
+    sim_dict = {}
+
+    for fn, rc in zip(filenames, run_configs):
         mean_sims, data = analyze.analyze_edge_test_similarity(fn)
-        means.append(np.mean(mean_sims))
-        indices.append(data['num_vectors'])
+
+        num_vectors = rc[1]
+        if num_vectors in sim_dict:
+            sim_dict[num_vectors].append(np.mean(mean_sims))
+        else:
+            sim_dict[num_vectors] = []
+
+    indices = sim_dict.keys()
+    means = [np.mean(sim_dict[nv]) for nv in sim_dict.keys()]
+
+    fig = plt.figure()
 
     plt.plot(np.array(indices), np.array(means))
+    plt.ylim((0.0, 1.1))
+
+    plt.savefig(plot_fname)
+
+    if show:
+        plt.show()
 
 def path_accuracy_plot(filenames):
     pass
