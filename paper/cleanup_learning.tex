@@ -43,6 +43,7 @@
 % N.B.: floatpagefraction MUST be less than topfraction !!
 \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
 \setlength{\parskip}{2mm plus1mm minus0mm}
+%\setlength{\textfloatsep}{\baselineskip plus 0.2\baselineskip minus 0.2\baselineskip}
 
 
 \newcommand{\eg}{e.g. }
@@ -115,15 +116,9 @@ What makes this useful is that \textbf{dog} preserves information about its cons
 &\approx \mathbf{canine_{ID}} + \mathbf{partOf} \circledast \mathbf{pack_{ID}} \circledast \overline{\mathbf{isA} }\label{eqn:unbind}
 \end{align}
 Equation \eqref{eqn:unbind} shows that $\mathbf{dog \circledast \overline{isA}}$ is \textbf{canine} superposed with another vector which can effectively be regarded as noise. All that remains is to remove that noise, and we will discuss methods for doing so below.
- 
-%Binding and superposition can roughly be thought of as a vector equivalent of the standard arithmetic operations of multiplication and addition, respectively. Indeed, they generally obey the same rules; for example, binding is associative, commutative, and distributes over superposition, similar to multiplication. 
-%
-%The operations used here deserve some elucidation. In a VSA, each symbol to be represented is randomly assigned a high-dimensional vector. Two core operations are provided, each of which takes two vectors as input and returns a third. \textit{Binding} ($\circledast$) two vectors returns a third vector that is \textit{disimilar} to both of the original vectors. The \textit{superposition} ($+$) of two vectors returns a third vector that is \textit{similar} to both of the original vectors. 
-%
-%One popular choice for a VSA is known as Holographic Reduced Representation. HRRs employ a circular convolution operation for binding, and vector addition for superposition. The approximate inverse of circular convolution is a simple permutation of the elements in a vector. 
 
 \subsection{Associative Memories}
-Observing equation \eqref{eqn:unbind}, we see that the result of devonvolution is not exactly what we want. It is insufficient in two ways. First, because of the other terms that are present, it is only \textit{similar to} the ID-vector for canine; presumably, we want the exact thing. Second, the ID-vector for canine is not useful on its own; it would be much more useful to have the structured vector for canine, in which case we could recursively apply the same operations, or send it to another module to be processed in other ways. These problems can be solved simultaneously by an associative memory mapping from ID-vectors to HRRs.
+Observing equation \eqref{eqn:unbind}, we see that the result of deconvolution is not exactly what we want. It is insufficient in two ways. First, because of the other terms that are present, it is only \textit{similar to} $\mathbf{canine_{ID}}$; in other words, there is noise the must be removed. Second, $\mathbf{canine_{ID}}$ is not particularly useful on its own; it would be much more useful to have the HRR for canine, from which we could recursively extract further structural information. These problems can be solved simultaneously by an associative memory.
 
 Associative memories typically store ordered pairs of vectors $<\xi, \eta>$. When the memory receives an input, if that input is sufficiently similar to some $\xi$, then the memory outputs the corresponding $\eta$. It is easy to see how this solves our problems if we let the $\xi$ be ID-vectors and the $\eta$ be HRR's: the associativity provides the mapping, and the fact that the input only has to be suffuciently similar to some $\xi$ solves the denoising problem. 
 
@@ -131,27 +126,8 @@ For example, for our miniature dog-centric vocabulary, we would store mappings b
 
 Associative memories have a long history in cognitive science, with a number of cognitive architectures being completely centered around them. However, all of these have shortcomings. The remainder of this work will examine how an associative memory can be learned in spiking neurons in a biologically plausible manner, using a number of neurons that is linear in the number of stored vectors.
 
-%The statistics of similarity between vectors assigned to the symbols in our vocabulary are very important for the correct functioning of an associative memory. Essentialy, we want vectors created by unbinding to have a high degree of similarity to their source vector, and a low degree of similarity to any other vector in the vocabulary. Under this assumption, an associative memory can work under the simple principle of outputting a sum of all stored vectors whose similarity to the input vector is above some fixed threshold; if the statistics hold, then the sum will be composed of exactly one vector, which should be the correct. As we will see later, this principle will permit the creation of an accurate neural associative memory using a number of neurons linear in number of stored vectors.
-%
-%It still remains to find a method of obtaining vectors with these desirable properties. For this we use two principles: use high-dimensional vectors, and choose them randomly. In high dimensions, the average similarity of two randomly chosen vectors is 0, and the variance of the similarity shrinks as the dimension grows. For our purposes, 512 dimensional vectors usually suffices to store structured knowledge bases on the scale of a human vocabulary; see Chris Eliasmith's book for reasons.
-%Moreover, in high dimensions, the variance of the similarity between an HRR and its source is greatly reduced. Figure FIGURE shows a histogram of such similarities. Clearly, HRRs are much more similar to their source than to any other vector in our vocabulary, assuming all vectors are chosen randomly.
-%
-%The remainder of this work addresses the question of learning an associative memory that retains the fundamental scaling properties of the handcoded memory. We begin by addressing a general method for representing and transforming vectors using spiking neurons, before showing how this technique can be put to use learning associative memories.
-
-
-%\subsection{Learning}
-%In previous work CITATION, we showed that the above scheme, when combined with principles of neural representation and transformation, permits the storage and manipulation of the WordNet, a semantic network containing ~117,000 concepts, larger than the ~60,000 terms in the average adult vocabulary. Indeed, we showed that it is the only known technique that is sufficiently efficient in terms of neurons to encode a human-scale knowledge base while respecting known anatomical constraints. However, one significant hole in that story was that the neural associative memory that we employed was hand-coded; that is, the connection weights were determined offline, in a biologically implausible manner. In the remainder of the present paper, we directly address this shortcoming, and show how an associative memory indistinguishable from the 'hand-coded' memory used in the previous work can be learned online using biologically plausible learning rules. We apply our technique to solve a task that resembles, on an abstract level, a child learning relations between objects in its environment.
-
 \section{Learning Structured Knowledge in Spiking Neurons}
-\begin{figure*}[htb]
-\begin{center}
-\includegraphics[height=25mm]{../diagrams/schematic.pdf}
-%\includegraphics[width=\textwidth]{../diagrams/schematic.pdf}
-\end{center}
-\caption{Schematic diagram of association network. White rectangles indicate populations of spiking neurons, arrows indicate all-to-all connections between populations, and grey ellipses indicate learning rules applied to connections.}
-\label{fig:schematic}
-\end{figure*}
-We begin this section with a characterization of a framework that provides a principled approach to constructing networks of spiking neurons that represent and transform vectors, which allows the creation of networks that represent and manipulate the vectorial encoding of structured knowledge given in the previous section. We then show how to apply this approach to build a neural network capable of learning to associate arbitrary pairs of vectors.
+We begin this section with a characterization of a framework that provides a principled approach to constructing networks of spiking neurons that represent and transform high-dimensional vectors, such as those used in the vectorial encoding of structured knowledge given in the previous section. We then show how to apply this approach to build a neural network capable of learning to associate arbitrary pairs of vectors.
 
 \subsection{Neural Representation and Computation}
 The Neural Engineering Framework (NEF) is a set of methods for building biologically
@@ -204,7 +180,7 @@ Given $N$ pairs of vectors to associate, $<\xi_k, \eta_k>$ for $k \in 1 \dots N$
  
 \renewcommand{\thepseudocode}{1}
 
-\begin{pseudocode}[ruled]{SimpleAssociation}{v}
+\begin{pseudocode}[ruled]{Association}{v}
   \label{alg:simple}
   sum \GETS 0\\
   \FOR k \GETS 1 \TO N\\
@@ -229,13 +205,19 @@ The associative memory learned by our network employs these same principles. How
 %First, we assume that the input population employs a relatively sparse representation; this increases the degree to which the activity of the neurons in the population is correlated with the vector that that population is representing at any given time, which, as we shall see, facilitates learning. 
 First, we assume that the association population employs a sparse representation, such that only a few association neurons are active for any given input vector. Importantly, this initial sparseness is general; roughly the same number of neurons should be active for any input vector, and hence the initial network is equally well equipped to learn any set of associations. The second contraint we place on the initial network is that the connection weights between the association population and the output population are very small; the effect is that in the early stages of training, no activity in the association population is sufficient to elicit activity in the output population. We now outline methods by which the connection weights in this network of spiking neurons are modified in response to training input to produce a resource-efficient, robust associative memory.
 
+\begin{figure}[b]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{../diagrams/schematic.pdf}
+%\includegraphics[width=\textwidth]{../diagrams/schematic.pdf}
+\end{center}
+\caption{Schematic diagram of association network. White rectangles indicate populations of spiking neurons, arrows indicate all-to-all connections between populations, and grey ellipses indicate learning rules applied to connections.}
+\label{fig:schematic}
+\end{figure}
 \subsubsection{Training}
 During training, the network has two inputs: $\xi$, the address vector, and $\eta$, the vector to be associated with $\xi$. We present each pair that we want our network to store for one second of simulation time, and allow the network to adjust its connection weights.
 
 \subsubsection{Sparse Representation}
 The initially sparse representation in the association layer ensures that only a few association neurons are active for any vector presented during training. These active neurons can be thought of as the neurons assigned to that pairing. With the above algorithm in mind, the goal, then, is to set the encoders of this population equal to $\xi$, and set the decoders of this population equal to $\eta$, using biologically plausible learning rules. 
-
-%One key to our learning algorithm is the sparse representation in the association population. This ensures that for any input vector, only a few association neurons become active. Those active neurons will be the neurons ``assigned'' to the vector they are storing. This activity, in conjunction with biologically plausible learning rules that operate based on the activity of these neurons, changes both the afferent and efferent connection weights of these neurons, giving them the power to compute the required association.
 
 \subsubsection{Oja's Rule: Increasing Selectivity}
 The first step is to make the active association neurons more selective for the current $\xi$. This may seem redundant, as the sparse representation ensures that the neurons are already fairly selective for the current input vector. However, those active neurons will also respond to other vectors that we might try to store in our memory, which could cause multiple association populations to become active when the memory is used. Our goal here is to ensure that these neurons are active only for input vectors that have a high-degree of similarity to the current training vector. Once training is complete, we want it to be the case that this population is active if and only if the input is a noisy version of the vector the population is assigned to, and thus will have no effect on the output if that is not the case.
@@ -250,7 +232,7 @@ where $x_i$ is the activity of the $i$th neuron in the input population, $y_j$ i
 \begin{center}
 \includegraphics[width=0.5\textwidth]{../plots/oja_plot_D_64.pdf}
 \end{center}
-\caption{Oja's rule changes neural selectivity. A population of neurons representing a 64 dimensional vector is connected to a single association neuron. Training phase: connection weights between population and association neuron changed according to Oja's rule while population represents a training vector. Gray line shows similarity of input to the training vector during a test phase, spike raster is the response of the association neuron. (Top) Before training. (Bottom) After training. The assocation neuron has become selective for the training vector.}
+\caption{Oja's rule changes neural selectivity. A population of neurons capable of representing a 64 dimensional vectors is connected to a single association neuron. Training phase: connection weights between population and association neuron changed according to Oja's rule while population represents a training vector. Gray line shows similarity of input to the training vector during a test phase, spike raster is the response of the association neuron. (Top) Before training. (Bottom) After training. The assocation neuron has become selective for the training vector.}
 \label{fig:oja}
 \end{figure}
 
@@ -292,16 +274,10 @@ Moreover.. if you learn one relation at some early point, but then never see tha
 
 One shortcoming of our method is that there is a limit to the number of relations that can be stored in any given vector. This is a consequence of the fact the HRR's compress many vectors of a given dimension into a single vector of the same dimension; obviously if we try to stuff too many vectors into a single HRR, much of the information will be lost. This seems like an important shortcoming, since clearly it is possible to know quite a lot about a given subject; experts abound. Our answer to this challenge is that since our method is so efficient, it is possible to have many of these memories in the brain. Thus as one becomes an expert in a subject, their representations of items will become more fine-grained, all these subtle distinctions being offloaded to another memory in a separate part of the brain. This may explain the commonly observed phenomena that experts have larger brains and more neurons in brain areas that are known to be relevant to their area of expertise CITATION.
 
-See how it applies to learning categories.. like i was working on earlier, clustering and prototypes.
-
-Pattern separation and the identity vectors.
+%Pattern separation and the identity vectors.
 Further explication the form of semantic representations in the brain.. i.e. emprically determing WHAT gets stored. i.e., what exactly are the identity vectors? seems like an important question.
 
-While this has mainly been presented as a theoretical study and a proof of principle, it remains plausible that such a 
-
-Has a lot of flexibility in terms of what can be stored in the HRR's.
-
-Role of neurogenesis, so we don't need a predetermined size of the cleanup pool. 
+%Role of neurogenesis, so we don't need a predetermined size of the cleanup pool. 
 %Our network can potentially also be seen as playing a role in determining what actually gets learned as well. 
 %Further, our network permits single relations to be learned at a time, while still permitting the entire structure to be accessed later on. This seems more plausible, as it is obviously not the case that children learn all properties relations of a word in a single blush.
 
