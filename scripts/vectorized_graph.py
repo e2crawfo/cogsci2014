@@ -81,7 +81,7 @@ def set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors):
     return weight_dict
 
 class VectorizedGraph(object):
-    def __init__(self, D, N, seed=1, simple=False, draw=False):
+    def __init__(self, D, N, seed=1, simple=False, draw=True, save=True):
         random.seed(seed)
 
         if simple:
@@ -97,7 +97,10 @@ class VectorizedGraph(object):
         weight_dict = set_edge_weights(G, hrr_vectors, id_vectors, edge_vectors)
 
         if draw:
+            plt.figure()
             draw_semantic_network(G, edge_labels=weight_dict)
+            if save:
+                plt.savefig("graphs/sn_D_%g_N_%g_s_seed_%g.pdf" % (D, N, seed))
             plt.show()
 
         self.num_vectors = N
@@ -162,5 +165,5 @@ if __name__ == '__main__':
     D = 512
     N = 30
 
-    V = VectorizedGraph(D, N, seed, draw=True)
+    V = VectorizedGraph(D, N, seed, draw=True, save=False)
 

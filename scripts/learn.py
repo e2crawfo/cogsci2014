@@ -18,7 +18,7 @@ def learn(data_fname, model_fname, params, num_vectors, training_time, simple=Fa
     lan = LearnableAssociationNetwork()
     lan.set_parameters(params)
 
-    vg = VectorizedGraph(params.dim, num_vectors, params.seed, simple)
+    vg = VectorizedGraph(params.dim, num_vectors, params.seed, simple, save=True, draw=True)
     lan.set_vectorized_graph(vg)
 
     lan.build()
