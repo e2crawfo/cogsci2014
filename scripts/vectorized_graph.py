@@ -15,6 +15,18 @@ def simple_network(n, seed=1):
     G = nx.cycle_graph(n, nx.DiGraph())
     return G
 
+def simple2_network(n, seed=1):
+    G = nx.DiGraph()
+    G.add_nodes_from(range(n))
+    for i in range(n):
+        degree = int(random.random() * 3) + 1
+        print degree
+        neighb = random.sample(range(0,i) + range(i+1,n), degree)
+        for ne in neighb:
+            G.add_edge(i, ne)
+
+    return G
+
 def draw_semantic_network(G, edge_labels=None):
     #pos = nx.spring_layout(G)
     pos = nx.circular_layout(G)
@@ -84,7 +96,9 @@ class VectorizedGraph(object):
     def __init__(self, D, N, seed=1, simple=False, draw=True, save=True):
         random.seed(seed)
 
-        if simple:
+        if simple=='simple2':
+            G = simple2_network(N, seed=seed)
+        elif simple:
             G = simple_network(N, seed=seed)
         else:
             G = semantic_network(N, seed=seed)

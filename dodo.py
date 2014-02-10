@@ -51,7 +51,7 @@ def task_learn():
         cur_params.seed = params.seed + rc[2]
         yield  {
                 'name':ln,
-                'actions':[(learn.learn, [lr, ln, cur_params, N, training_time])],
+                'actions':[(learn.learn, [lr, ln, cur_params, N, training_time, 'simple2'])],
                 'file_dep':[],
                 'targets':[lr, ln],
                 'uptodate':[run_once]
