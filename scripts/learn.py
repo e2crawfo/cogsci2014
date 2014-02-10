@@ -1,9 +1,10 @@
 
 from association_network import LearnableAssociationNetwork, Parameters
 from vectorized_graph import VectorizedGraph
-import cutilities
 import logging
 import pickle
+from mytools import cu
+
 
 def learn(data_fname, model_fname, params, num_vectors, training_time, simple=False):
 
@@ -12,7 +13,7 @@ def learn(data_fname, model_fname, params, num_vectors, training_time, simple=Fa
     cleanup_n = params.neurons_per_vector * num_vectors
     params.cleanup_n = cleanup_n
     prob, cleanup_intercept = \
-            cutilities.minimum_threshold(0.5, params.neurons_per_vector/2, cleanup_n, params.dim)
+            cu.minimum_threshold(0.5, params.neurons_per_vector/2, cleanup_n, params.dim)
     params.cleanup_params['intercepts'] = [cleanup_intercept]
 
     lan = LearnableAssociationNetwork()

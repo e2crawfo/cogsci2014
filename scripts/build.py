@@ -1,6 +1,6 @@
 import nengo
 from nengo.nonlinearities import OJA, PES
-from cutilities import minimum_threshold
+from mytools import cu
 
 import numpy as np
 
@@ -9,7 +9,7 @@ def build_learning_cleanup(dim, num_vectors, neurons_per_vector,
     cleanup_n = neurons_per_vector * num_vectors
 
     if intercept is None:
-        prob, intercept = minimum_threshold(0.9, neurons_per_vector, cleanup_n, dim)
+        prob, intercept = cu.minimum_threshold(0.9, neurons_per_vector, cleanup_n, dim)
 
     print "Threshold:", intercept
     cleanup = nengo.Ensemble(label='cleanup',
@@ -35,9 +35,6 @@ def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
         pre_ensembles.append(nengo.Ensemble(label='pre_'+str(i), neurons=nengo.LIF(NperE),
                             dimensions=DperE,
                             **ensemble_params))
-        #intercepts=pre_intercepts * NperE,
-        #                    max_rates=pre_max_rates * NperE,
-        #                    radius=pre_radius))
 
     # ----- Get decoders for pre populations. We use them to initialize the connection weights
     if pre_decoders is None:
