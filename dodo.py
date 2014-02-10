@@ -105,6 +105,7 @@ def task_example_simulation_plot():
 
     params = association_network.Parameters(
                     dim=dim,
+                    seed=seed,
                     DperE=DperE,
                     neurons_per_vector = 20,
                     NperD = 30,
