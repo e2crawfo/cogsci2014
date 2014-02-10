@@ -130,7 +130,7 @@ def task_example_simulation_plot():
 
     yield  {
             'name':'example_learn_D_%g_N_%g' % (dim, N),
-            'actions':[(learn.learn, [learn_data, learn_network, params, N, training_time, seed, True])],
+            'actions':[(learn.learn, [learn_data, learn_network, params, N, training_time, True])],
             'file_dep':[],
             'targets':[learn_data, learn_network],
             'uptodate':[run_once]
