@@ -58,8 +58,13 @@ def edge_similarity_plot(filenames, run_configs, plot_fname, show=False):
 
     fig = plt.figure()
 
-    plt.plot(np.array(indices), np.array(means))
+    plt.plot(np.array(indices), np.array(output_means), color="Blue", label="Output", marker='o')
+    plt.plot(np.array(indices), np.array(input_means), color="Red", label="Input", marker='2')
+    plt.legend()
+    plt.xlabel("# nodes in graph")
+    plt.ylabel("Similarity")
     plt.ylim((0.0, 1.1))
+    plt.xlim((min(indices) - 1, max(indices) + 1))
 
     plt.savefig(plot_fname)
 
