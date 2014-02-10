@@ -15,12 +15,12 @@ def simple_network(n, seed=1):
     G = nx.cycle_graph(n, nx.DiGraph())
     return G
 
-def simple2_network(n, seed=1):
+def simple2_network(n, max_degree=3, seed=1):
+    assert n > max_degree
     G = nx.DiGraph()
     G.add_nodes_from(range(n))
     for i in range(n):
-        degree = int(random.random() * 3) + 1
-        print degree
+        degree = int(random.random() * max_degree) + 1
         neighb = random.sample(range(0,i) + range(i+1,n), degree)
         for ne in neighb:
             G.add_edge(i, ne)
@@ -165,6 +165,7 @@ class VectorizedGraph(object):
 
 
     def path_testing_schedule(self, testing_time, num_tests, path_length):
+        #TODO: make this work
         edges = random.sample(list(self.G.edges_iter(data=True)), num_tests)
 
         correct_vectors = [hrr_vectors[v] for u,v,d in edges]
