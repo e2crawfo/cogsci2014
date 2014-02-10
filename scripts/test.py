@@ -15,11 +15,12 @@ def test_edges(in_fname, out_fname, testing_time, num_tests, order=None):
     vg = lan.vectorized_graph
 
     schedule = vg.edge_testing_schedule(testing_time, num_tests, order)
-    sim_length, address_func, correct_vectors = schedule
+    sim_length, address_func, correct_vectors, input_vectors = schedule
 
     lan.test(sim_length, address_func)
 
     data = lan.extract_data()
+    data['input_vectors'] = input_vectors
     data['correct_vectors'] = correct_vectors
     data['testing_time'] = testing_time
     data['num_tests'] = num_tests

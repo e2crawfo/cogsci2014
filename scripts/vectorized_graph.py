@@ -132,18 +132,19 @@ class VectorizedGraph(object):
             edges = [edges[int(random.random() * len(edges))] for i in xrange(num_tests)]
 
         correct_vectors = [self.hrr_vectors[v].v for u,v,d in edges]
+        input_vectors = [self.id_vectors[v].v for u,v,d in edges]
 
         testing_vectors = [self.hrr_vectors[u].convolve(~self.edge_vectors[d['index']])
                            for u,v,d in edges]
         testing_vectors = map(lambda x: x.v, testing_vectors)
 
         testing_gens = [nf.output(100, True, tv, False) for tv in testing_vectors]
-        testing_times = [testing_time] * self.num_vectors
+        testing_times = [testing_time] * num_tests
         testing_func = nf.make_f(testing_gens, testing_times)
 
         sim_time = sum(testing_times)
 
-        return (sim_time, testing_func, correct_vectors)
+        return (sim_time, testing_func, correct_vectors, input_vectors)
 
 
     def path_testing_schedule(self, testing_time, num_tests, path_length):

@@ -16,10 +16,11 @@ def edge_accuracy_plot(filenames, run_configs, plot_fname, show=False):
         if num_vectors in correct_dict:
             correct_dict[num_vectors].append(acc)
         else:
-            correct_dict[num_vectors] = []
+            correct_dict[num_vectors] = [acc]
 
     indices = correct_dict.keys()
-    means = [np.mean(correct_dict[nv]) for nv in correct_dict.keys()]
+    indices.sort()
+    means = [np.mean(correct_dict[nv]) for nv in indices]
 
     fig = plt.figure()
 
@@ -33,19 +34,27 @@ def edge_accuracy_plot(filenames, run_configs, plot_fname, show=False):
         plt.show()
 
 def edge_similarity_plot(filenames, run_configs, plot_fname, show=False):
-    sim_dict = {}
+    output_sim_dict = {}
+    input_sim_dict = {}
 
     for fn, rc in zip(filenames, run_configs):
-        mean_sims, data = analyze.analyze_edge_test_similarity(fn)
+        mean_input_sims, mean_output_sims, data = analyze.analyze_edge_test_similarity(fn)
 
         num_vectors = rc[1]
-        if num_vectors in sim_dict:
-            sim_dict[num_vectors].append(np.mean(mean_sims))
+        if num_vectors in output_sim_dict:
+            output_sim_dict[num_vectors].append(np.mean(mean_output_sims))
         else:
-            sim_dict[num_vectors] = []
+            output_sim_dict[num_vectors] = [np.mean(mean_output_sims)]
 
-    indices = sim_dict.keys()
-    means = [np.mean(sim_dict[nv]) for nv in sim_dict.keys()]
+        if num_vectors in input_sim_dict:
+            input_sim_dict[num_vectors].append(np.mean(mean_input_sims))
+        else:
+            input_sim_dict[num_vectors] = [np.mean(mean_input_sims)]
+
+    indices = input_sim_dict.keys()
+    indices.sort()
+    input_means = [np.mean(input_sim_dict[nv]) for nv in indices]
+    output_means = [np.mean(output_sim_dict[nv]) for nv in indices]
 
     fig = plt.figure()
 
