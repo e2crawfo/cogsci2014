@@ -59,6 +59,7 @@ nosetests.xml
 *.mtc1
 *.out
 *.synctex.gz
+*.pdf
 
 
 # vim
