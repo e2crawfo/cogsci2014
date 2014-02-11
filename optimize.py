@@ -18,11 +18,11 @@ def make_objective(base_params, num_samples, num_vectors, num_tests, training_ti
     import numpy as np
     from scipy import stats
     def objective(kwargs):
-        
+
         params = copy.deepcopy(base_params)
-        params.oja_scale = kwargs['oja_scale'] 
-        params.oja_learning_rate = kwargs['oja_learning_rate'] 
-        params.seed = kwargs['seed'] 
+        params.oja_scale = kwargs['oja_scale']
+        params.oja_learning_rate = kwargs['oja_learning_rate']
+        params.seed = kwargs['seed']
 
         mean_input_sims = []
         mean_output_sims = []
@@ -31,7 +31,7 @@ def make_objective(base_params, num_samples, num_vectors, num_tests, training_ti
             data_fname = fh.make_filename('training', config_dict=params.__dict__, use_time=True)
             model_fname = fh.make_filename('models', config_dict=params.__dict__, use_time=True)
             test_fname = fh.make_filename('tests', config_dict=params.__dict__, use_time=True)
-            
+
             learn.learn(data_fname, model_fname, params, num_vectors, training_time, simple='simple2')
             test.test_edges(model_fname, test_fname, testing_time, num_tests)
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             return f
         objective = make_f()
     else:
-        objective = make_objective(params, num_samples, num_vectors, num_tests, 
+        objective = make_objective(params, num_samples, num_vectors, num_tests,
                                     training_time, testing_time)
 
     trials = MongoTrials('mongo://localhost:1234/assoc/jobs', exp_key=exp_key)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         #"--workdir","~/cogsci2014/",
         ]
 
-    print "Worker Call String"            
+    print "Worker Call String"
     print worker_call_string
     workers = []
     for i in range(num_mongo_workers):
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             'oja_scale':hp.uniform('oja_scale', 0, 30),
             'oja_learning_rate':hp.uniform('oja_learning_rate', 0.01, 1),
             }
-    
+
     then = time.time()
 
     print "Calling fMin"
@@ -153,14 +153,16 @@ if __name__ == "__main__":
 
     now = time.time()
 
-    aggregated_log = open(fh.make_filename('optlog', use_time=True), 'w')
+    directory = '/data/e2crawfo/cleanuplearning/opt/logs'
+    filename = fh.make_filename('optlog', directory=directory, use_time=True)
+    aggregated_log = open(filename, 'w')
 
     aggregated_log.write("Time for fmin: " + str(now - then) + "\n")
     aggregated_log.write("Trials: " + str(trials.trials) + "\n")
     aggregated_log.write("Results: " + str(trials.results) + "\n")
     aggregated_log.write("Losses: " + str(trials.losses()) + "\n")
     aggregated_log.write("Statuses: " + str(trials.statuses()) + "\n")
-        
+
     aggregated_log.close()
 
 
