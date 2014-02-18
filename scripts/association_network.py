@@ -41,7 +41,7 @@ class LearnableAssociationNetwork(object):
         self._build(**self.parameters.__dict__)
 
     def _build(self, seed, dim, DperE, NperD, cleanup_n, cleanup_params, ensemble_params,
-                  oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate, **kwargs):
+                  oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate, rate=False, **kwargs):
 
         num_ensembles = int(dim / DperE)
         NperE = NperD * DperE
@@ -50,6 +50,11 @@ class LearnableAssociationNetwork(object):
         model = nengo.Model("Learn cleanup", seed=seed)
 
         print self.parameters.__dict__
+
+        if rate:
+            neurons = nengo.LIFRate(cleanup_n)
+        else:
+            neurons = nengo.LIF(cleanup_n)
 
         def make_func(obj, funcname):
             def g(t):
@@ -67,16 +72,16 @@ class LearnableAssociationNetwork(object):
 
         # ----- Build neural part -----
         #cleanup = build_training_cleanup(dim, num_vectors, neurons_per_vector, intercept=intercept)
-        cleanup = nengo.Ensemble(label='cleanup', neurons=nengo.LIF(cleanup_n),
+        cleanup = nengo.Ensemble(label='cleanup', neurons=neurons,
                               dimensions=dim, **cleanup_params)
 
         pre_ensembles, pre_decoders, pre_connections = \
                 build_cleanup_oja(model, address_input, cleanup, DperE, NperD, num_ensembles,
                                   ensemble_params, oja_learning_rate, oja_scale,
-                                  learn=make_func(self, "learn_func"))
+                                  learn=make_func(self, "learn_func"), rate=rate)
 
         output_ensembles, error_ensembles = \
-                build_cleanup_pes(cleanup, stored_input, DperE, NperD, num_ensembles, pes_learning_rate)
+                build_cleanup_pes(cleanup, stored_input, DperE, NperD, num_ensembles, pes_learning_rate, rate=rate)
 
         gate = nengo.Node(output=make_func(self, "gate_func"))
         for ens in error_ensembles:

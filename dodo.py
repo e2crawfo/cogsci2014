@@ -35,6 +35,7 @@ params = association_network.Parameters(
                 ensemble_params = {'radius':1.0,
                                    'max_rates':[400],
                                    'intercepts':[0.1]},
+                rate=True,
                 )
 
 run_configs = [(dim, N, s) for N in num_vectors for s in range(num_samples)]

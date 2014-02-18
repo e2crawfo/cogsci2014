@@ -5,15 +5,20 @@ from mytools import cu
 import numpy as np
 
 def build_learning_cleanup(dim, num_vectors, neurons_per_vector,
-                           intercept=None, radius=1.0, max_rate=200):
+                           intercept=None, radius=1.0, max_rate=200, rate=False):
     cleanup_n = neurons_per_vector * num_vectors
+    if rate:
+        neurons = nengo.LIFRate(cleanup_n)
+    else:
+        neurons = nengo.LIF(cleanup_n)
+
 
     if intercept is None:
         prob, intercept = cu.minimum_threshold(0.9, neurons_per_vector, cleanup_n, dim)
 
     print "Threshold:", intercept
     cleanup = nengo.Ensemble(label='cleanup',
-                             neurons=nengo.LIF(cleanup_n),
+                             neurons=neurons,
                              dimensions=dim,
                              radius=radius,
                              max_rates=[max_rate]  * cleanup_n,
@@ -24,22 +29,26 @@ def build_learning_cleanup(dim, num_vectors, neurons_per_vector,
 def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
                       ensemble_params, learning_rate, oja_scale, encoders=None,
                       pre_decoders=None, use_oja=True, pre_tau=0.03, post_tau=0.03,
-                      end_time=None, learn=None):
+                      end_time=None, learn=None, rate=False):
 
     NperE = NperD * DperE
     dim = DperE * num_ensembles
+    if rate:
+        neurons = nengo.LIFRate(cleanup_n)
+    else:
+        neurons = nengo.LIF(cleanup_n)
 
     # ----- Make Nodes -----
     pre_ensembles = []
     for i in range(num_ensembles):
-        pre_ensembles.append(nengo.Ensemble(label='pre_'+str(i), neurons=nengo.LIF(NperE),
+        pre_ensembles.append(nengo.Ensemble(label='pre_'+str(i), neurons=neurons,
                             dimensions=DperE,
                             **ensemble_params))
 
     # ----- Get decoders for pre populations. We use them to initialize the connection weights
     if pre_decoders is None:
         dummy = nengo.Ensemble(label='dummy',
-                                neurons=nengo.LIF(NperE),
+                                neurons=neurons,
                                 dimensions=dim)
 
         def make_func(dim, start):
@@ -94,15 +103,20 @@ def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
     return pre_ensembles, pre_decoders, pre_connections
 
 
-def build_cleanup_pes(cleanup, error_input, DperE, NperD, num_ensembles, learning_rate):
+def build_cleanup_pes(cleanup, error_input, DperE, NperD, num_ensembles, learning_rate, rate=False):
 
     NperE = NperD * DperE
     dim = DperE * num_ensembles
 
+    if rate:
+        neurons = nengo.LIFRate(NperE)
+    else:
+        neurons = nengo.LIF(NperE)
+
     # ----- Make Nodes -----
     output_ensembles=[]
     for i in range(num_ensembles):
-        ens = nengo.Ensemble(label='output'+str(i), neurons=nengo.LIF(NperE),
+        ens = nengo.Ensemble(label='output'+str(i), neurons=neurons,
                         dimensions=DperE,
                         )
 
@@ -110,7 +124,7 @@ def build_cleanup_pes(cleanup, error_input, DperE, NperD, num_ensembles, learnin
 
     error_ensembles=[]
     for i in range(num_ensembles):
-        ens = nengo.Ensemble(label='error'+str(i), neurons=nengo.LIF(NperE),
+        ens = nengo.Ensemble(label='error'+str(i), neurons=neurons,
                         dimensions=DperE,
                         )
 
