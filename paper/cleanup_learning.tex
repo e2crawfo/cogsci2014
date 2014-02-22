@@ -43,7 +43,7 @@
 % N.B.: floatpagefraction MUST be less than topfraction !!
 \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
 \setlength{\parskip}{2mm plus1mm minus0mm}
-%\setlength{\textfloatsep}{\baselineskip plus 0.2\baselineskip minus 0.2\baselineskip}
+%\setlength{\textfloatsep}{\baselineskip plus 0.1\baselineskip minus 0.2\baselineskip}
 
 
 \newcommand{\eg}{e.g. }
@@ -62,7 +62,7 @@
 \newcommand{\Fido}{Max}
 
 
-\title{Learning Structured Information in Spiking Neurons}
+\title{Learning Structured Knowledge in Spiking Neurons}
  
 %\setlength{\textfloatsep}{5pt plus 1.0pt minus 2.0pt}
 \author{\large \bf Eric Crawford (e2crawfo@uwaterloo.ca)\\
@@ -70,7 +70,7 @@
   Centre for Theoretical Neuroscience, University of Waterloo,
   Waterloo, ON, N2L 3G1}
 \setlength{\intextsep}{1pt plus 1.0pt minus 2.0pt}
-\setlength{\textfloatsep}{5pt plus 1.0pt minus 2.0pt}
+\setlength{\textfloatsep}{3pt plus 1.0pt minus 2.0pt}
 %\setlength{\textfloatsep}{.1cm}
 \begin{document}
 
@@ -96,9 +96,9 @@ We begin by presenting a formalism that allows the encoding of large structured 
 
 \subsection{Holographic Reduced Representations}
 Holographic Reduced Representations (HRRs) are a type of Vector Symbolic Architecture (VSA). They provide us with a means of representing structured knowledge in a vectorial format \citep{Plate2003d}.  To begin, we fix a dimension for our vectors. 
-Previous investigations have shown that using 512-dimensional vectors provides sufficient representational capacity to accommodate knowledge bases containing on the order of 60,000 items \citep{Eliasmith2012}, roughly the size of an adult human vocabulary \citep{Ogrady}. However, computational constraints have not permitted us to use such large knowledge bases in the present study (though we do give reasons why our approach should gracefully scale up to knowledge bases this large), rendering 512-dimensions excessive. Consequently, here we use 64-dimensional vectors. 
+Previous investigations have shown that using 512-dimensional vectors provides sufficient representational capacity to accommodate knowledge bases containing on the order of 60,000 items \citep{Eliasmith2012}, roughly the size of an adult human vocabulary. However, computational constraints have not permitted us to use such large knowledge bases in the present study (though we do give reasons why our approach should gracefully scale up to knowledge bases this large), rendering 512-dimensions excessive. Consequently, here we use 64-dimensional vectors. 
 
-Each symbol in the structured knowledge base that we want to represent is then assigned two vectors. The first is called an ID-vector, and acts as a unique identifier for the symbol it is assigned to. The second vector is an HRR that encodes the structured relations belonging to the symbol it is assigned to. This vector is built up in terms of ID-vectors corresponding to related symbols and other vectors assigned to relations, combined using specialized operations specified by the HRR formalism.
+Each symbol in the structured knowledge base that we want to represent is then assigned two vectors. The first is called an ID-vector, and acts as a unique identifier for the symbol it is assigned to. The ID-vectors are typically randomly chosen. The second vector is an HRR that encodes the structured relations belonging to the symbol it is assigned to. This vector is built up in terms of ID-vectors corresponding to related symbols and other vectors assigned to relations, combined using specialized operations specified by the HRR formalism.
 
 Suppose, for example, that our vocabulary contains a symbol \textit{dog}, and we would like to encode two facts or relations about dogs, namely that they are members of packs, and that they are canines. Using the HRR operations of \textit{circular convolution} ($\circledast$) and \textit{vector addition} ($+$), the HRR for \textit{dog} is given by:
 \begin{align}
@@ -124,9 +124,9 @@ Associative memories typically store ordered pairs of vectors $\langle\xi, \eta\
 
 For example, for our miniature dog-centric vocabulary, the pairs stored in the associative memory would be $\langle\mathbf{dog_{ID}}, \mathbf{dog}\rangle$, $\langle\mathbf{canine_{ID}}, \mathbf{canine}\rangle$ and $\langle\mathbf{pack_{ID}}, \mathbf{pack}\rangle$. When the vector from Equation \eqref{eqn:unbind} is given as input, it will be similar to $\mathbf{canine_{ID}}$, and disimilar to $\mathbf{dog_{ID}}$ and $\mathbf{pack_{ID}}$. Consequently, the output of the associative memory will be $\mathbf{canine}$.
 
-A significant portion of this paper is concerned with demonstrating how a scalable, efficient, biologically-plausible neural associative memory can be learned from training data.
+A significant portion of the remainder of this paper is concerned with demonstrating how a scalable, efficient, biologically-plausible neural associative memory can be learned from training data.
 
-\section{Learning Structured Knowledge in Spiking Neurons}
+\section{Learning Associations in Spiking Neurons}
 We begin this section with a characterization of a framework that provides a principled approach to constructing networks of spiking neurons that represent and transform high-dimensional vectors, including those used in the vectorial encoding of structured knowledge given in the previous section. We then show how to apply this approach to build a spiking neural network capable of learning arbitrary associations.
 
 \subsection{Neural Representation and Computation}
@@ -134,12 +134,12 @@ The Neural Engineering Framework (NEF) is a set of methods for building biologic
 plausible models using principles for neural representation, transformation and dynamics \citep{Eliasmith2003m}. 
 The central idea behind the NEF is that the activity of a population of spiking neurons can be interpreted as representing a vector whose dimensionality is potentially much different from the size of the neural population; a typical case is to have a 2-D vector represented by a population of 100 spiking neurons. The NEF then provides a set of methods for determining connection weights between neural populations which compute any desired function of the represented vector.
 
-Suppose, for instance, that we have a population A representing some vector $x$, and that we would like a second population B to represent $f(x)$, an arbitrary function of $x$. The NEF tells us exactly what the feedforward connection weights between A and B must be to compute this function. To achieve this, the NEF assumes that each neuron in A and B has an \textit{encoding} vector, sometimes called a \textit{preferred direction vector}, which specifies the direction in the represented space of the population for which the neuron is most active. The spiking activity of every neuron in a population A can be written:
+Suppose, for instance, that we have a population A representing some vector $x$, and that we would like a second population B to represent $f(x)$, an arbitrary function of $x$. The NEF tells us exactly what the feedforward connection weights between A and B must be to compute this function. To achieve this, the NEF assumes that each neuron in A and B has an \textit{encoding} vector, sometimes called a \textit{preferred direction vector}, which specifies the direction in the space represented by the population for which the neuron is most active. The spiking activity of every neuron in a population A can then be written:
 \begin{align}
-a_i (x) = G [\ \alpha_i e_i x\ +\ J_{bias}\ ]\label{eqn:enc}
+a_i (x) = G [\ \alpha_i e_i^T x\ +\ J_{bias}\ ]\label{eqn:enc}
 \end{align}
-where $a_i$ is the spiking activity of $i$th neuron in the population, $G$ is the spiking neural nonlinearity, $\alpha_i$ is the gain of the neuron, $e_i$ is the encoding vector of the $i$th neuron, and $J_{bias}$ is a bias current to account for background activity of the neuron. The elements in the square brackets correspond to the current flowing into the cell, which then drives the spiking of the chosen single cell model $G$. For computational efficiency, we employ a leaky integrate-and-fire (LIF) neuron model, though the NEF can be applied for arbitrary neuron models. Equation \eqref{eqn:enc} is referred to as the \textit{encoding} equation because it describes how a vector, in this case $x$, is encoded into neural spikes. The NEF then assumes linear decoding can be used to reconstruct $x$ or any nonlinear function thereof, $f(x)$, from the spiking activity of the population. Thus, we assign each neuron a
-\textit{decoding} vector $d^f_i$, which are used to obtain a reconstruction of $f(x)$, denoted here as $\widehat{f(x)}$, in terms of the activities of the population:
+where $a_i$ is the spiking activity of $i$th neuron in the population, $G$ is the spiking neural nonlinearity, $\alpha_i$ is the gain of the $i$th neuron, $e_i$ is the encoding vector of the $i$th neuron, and $J_{bias}$ is a bias current to account for background activity of the neuron. The elements in the square brackets correspond to the current flowing into the cell, which then drives the spiking of the chosen single cell model $G$. For computational efficiency, we employ a leaky integrate-and-fire (LIF) neuron model, though the NEF can be applied for arbitrary neuron models. Equation \eqref{eqn:enc} is referred to as the \textit{encoding} equation because it describes how a vector, in this case $x$, is encoded into neural spikes. The NEF then assumes linear decoding can be used to reconstruct $x$ or any nonlinear function thereof, $f(x)$, from the spiking activity of the population. Thus, we assign each neuron a
+\textit{decoding} vector $d^f_i$. These decoding vectors can be used to obtain a reconstruction of $f(x)$, denoted here as $\widehat{f(x)}$, in terms of the activities of the population:
 \begin{align}
 \widehat{f(x)} = \sum_i a_i(x) d^f_i \label{eqn:dec}
 \end{align}
@@ -148,17 +148,16 @@ where $N$ is the number of neurons in the population. This is known as the \text
 E = \frac{1}{2}\int[f(x) - \sum_i a_i(x) d^f_i]^2dx\label{eqn:error}
 \end{align}
 with respect to $d^f_i$.
-Recall that our purpose is toderive connection weights between A and B that compute the function $f$ on the vector represented by A. If we define the encoding
+Recall that our purpose is to derive connection weights between A and B that compute the function $f$ on the vector represented by A. If we define the encoding
 and decoding for populations A and B using equations \eqref{eqn:enc} and \eqref{eqn:dec}, we can substitute the
 decoding of A into the encoding of B, thereby deriving connection weights. The weights for computing $f$ are then:
 \begin{align}
 \omega_{ij} = \alpha_j e_j d^f_i \label{eqn:weight}
 \end{align}
-where $i$ indexes the neurons in A and $j$ indexes the neurons in B. Intuitively, this weight matrix works by decoding $f(x)$ from population A using the decoding vectors for the neurons in A, and encoding it into the activities of population B using the encoding vectors for the neurons in B.
+where $i$ indexes the neurons in A and $j$ indexes the neurons in B. Intuitively, this weight matrix works by decoding an estimate of $f(x)$ from population A and encoding it into the activities of population B using encoders.
 
 \subsection{Learning Associations in Spiking Neurons}
 We now show how this technique, combined with neural learning rules, can be applied to create a spiking neural network capable of efficiently learning associations. Given $N$ pairs of vectors to associate, $\langle\xi_k, \eta_k\rangle$ for $k \in 1 \dots N$, the following simple algorithm implements the associative memory functionality:
- 
 \renewcommand{\thepseudocode}{1}
 
 \begin{pseudocode}[ruled]{Association}{v}
@@ -170,7 +169,7 @@ We now show how this technique, combined with neural learning rules, can be appl
     sum \GETS sum + scale * \eta_k\\
   \END\\
   \RETURN{sum}
-\end{pseudocode} 
+\end{pseudocode}
 
 If the threshold is set correctly (which depends on the statistics of the input), \textit{scale} will be non-zero for at most one value of $k$, and the output will be either the zero vector or $\eta_k$.
 
@@ -178,11 +177,11 @@ In previous work, the NEF has been used to construct a network implementing a ne
 
 In the NEF-constructed neural network implementing this algorithm, each pair of vectors $\langle\xi, \eta\rangle$ is assigned a small ($\sim$20) neural population. The encoding vectors of this population are set equal to $\xi$, and the parameters of the neurons' LIF response functions are set so that the neurons only spike if the input is sufficiently similar to $\xi$. Finally, the decoders of the population are set equal to $\eta$. The overall effect is that when a population is active, it outputs its assigned $\eta$, and a population is active if and only if the input is sufficiently similar to its assigned $\xi$. All these populations converge on a single output population, where the inputs are summed by the dendrites. In essence, each neural population computes, in parallel, one iteration of the loop in Algorithm \ref{alg:simple}.
 
-The associative memory learned by our network employs these same principles. However, rather than computing the appropriate connection weights ahead of time using the NEF as we have done previously, here we want our network to arrive at them through training and the application of learning rules. A schematic diagram of the network that achieves this learning is shown in \fg~\ref{fig:schematic}. 
+The associative memory learned by our network employs these same principles. However, rather than computing the appropriate connection weights ahead of time using the NEF as we have done previously, here we want our network to arrive at them through training and the application of learning rules. A schematic diagram of the network that achieves this learning is shown in \fg~\ref{fig:schematic}, and an example of the network in action is show in \fg~\ref{fig:example}. 
 
 We impose several assumptions on the pre-trained network. First, we assume that the association population contains a number of neurons that is linear in the number of vectors we want to store. In the future, it is likely that this simplifying assumption can be relaxed, and the appropriate number of neurons allocated online through neurogenesis. Second, we assume that the association population initially employs a sparse representation, such that only a few association neurons are active for any given input vector. Importantly, this initial sparseness is general; roughly the same number of neurons should be active for any input vector, and hence the initial network is equally well equipped to learn any set of associations. The final constraint on the initial network is that the connection weights between the association population and the output population are very small; the effect is that in the early stages of training, no activity in the association population is sufficient to elicit activity in the output population. These initial constraints are enforced by using the NEF to choose encoders and decoders appropriately. We now outline methods by which the initial connection weights in this network of spiking neurons are modified in response to training input to produce a resource-efficient, robust associative memory.
 
-\begin{figure}[b]
+\begin{figure}[t]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{../diagrams/schematic.pdf}
 %\includegraphics[width=\textwidth]{../diagrams/schematic.pdf}
@@ -203,8 +202,8 @@ To achieve this increase in selectivity, we use a normalized hebbian learning ru
 \begin{align}
   \Delta w_{ij} = \alpha (x_i y_j - \frac{y_j^2 w_{ij}}{\beta})
 \end{align}
-where $x_i$ is the activity of the $i$th neuron in the input population, $y_j$ is the activity of the $j$th association neuron, $\alpha$ is the learning rate, and $\beta$ is a constant that is asymptotically proportional to $\sum_i w_{ij}^2$, the sum of squares for each row of the weight matrix. Because the neurons are spiking, the activities $x_i$ and $y_j$ are low-pass filtered versions of spike trains. Fig. \ref{fig:oja} shows an example of what can be achieved by Oja's rule. Because of the form of Oja's rule, only weights for active association neurons are changed; they are increased if the corresponding input neuron is also active, and pushed towards 0 otherwise. During presentation of a noisy version $\xi$, many of the same input neurons will be active, which should active the same set of association neurons.
-\begin{figure}[ht]
+where $x_i$ is the activity of the $i$th neuron in the input population, $y_j$ is the activity of the $j$th association neuron, $\alpha$ is the learning rate, and $\beta$ is a constant that is asymptotically proportional to $\sum_i w_{ij}^2$, the sum of squares for each row of the weight matrix. Because the neurons are spiking, the activities $x_i$ and $y_j$ are low-pass filtered versions of spike trains. Fig. \ref{fig:oja} shows an example of what can be achieved by Oja's rule. Because of the form of Oja's rule, only weights for active association neurons are changed; they are increased if the corresponding input neuron is also active, and pushed towards 0 otherwise. During presentation of a noisy version of $\xi$, many of the same input neurons will be active, which should activate the same set of association neurons.
+\begin{figure}[h]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{../default_plots/oja_plot_D_64.pdf}
 \end{center}
@@ -217,33 +216,41 @@ Increasing selectivity of active neurons gets us part of the way. What we requir
 \begin{align}
 \Delta \omega_{ij} = \kappa \alpha_j \mathbf{e_j} \cdot \mathbf{E}a_i
 \end{align}
-where $\kappa$ is a scalar learning rate, $\mathbf{E}$ is a vector giving the error that we want to minimize, $a_i$ is the vector of activitions of the association neurons, $e_j$ is the encoder of the $j$th output neuron, and $\alpha_j$ is the gain of the $j$th output neuron. $\mathbf{E}$ is the supervision signal, stored by the $Error$ population in Fig. \ref{fig:schematic}, which represents the difference between the vector that the output population is currently representing, and the vector it ``should'' be representing, in this case $\eta$ of the current training pair. The rule works to minimize $\mathbf{E}$ by changing the connection weights between the active neurons in the association population and active neurons in the output population. This rule has biologically-plausible foundations, and has been used to learn connection weight matrices that compute complicated non-linear functions; in particular, it has successfully used to learn the circular convolution operation required for creating HRRs \citep{Stewart2011a}. Here we are learning what amounts to a constant function (during the presentation of a single pair), which is well within the capabilities of the rule.
+where $\kappa$ is a scalar learning rate, $a_i$ is the vector of activations of the association neurons, $e_j$ is the encoder of the $j$th output neuron, and $\alpha_j$ is the gain of the $j$th output neuron. $\mathbf{E}$ is the supervision signal, stored by the $Error$ population in Fig. \ref{fig:schematic}, which represents the difference between the vector that the output population is currently representing, and the vector it ``should'' be representing, in this case $\eta$ of the current training pair. The rule works to minimize $\mathbf{E}$ by changing the connection weights between the active neurons in the association population and all neurons in the output population. This rule has biologically-plausible foundations, and has been used to learn connection weight matrices that compute complicated non-linear functions; in particular, it has successfully used to learn the circular convolution operation required for creating HRRs \citep{Stewart2011a}. Here we are learning what amounts to a constant function (during the presentation of a single pair), which is well within the capabilities of the rule.
 
 \section{Simulations}
-To test the efficacy of our network, we apply it to the task of learning random directed graphs. If the graph is taken to represent a semantic network, wherein the nodes correspond to semantic elements, and the edges correspond to relations between those elements, then the network can be interpreted as learning semantic structure, superficially similar to a child learning the structure of his environment.
+To test the ability of this network to learn structure, we apply it to the task of learning random directed graphs. If the graphs are taken to represent semantic networks, wherein the nodes correspond to semantic elements, and the edges correspond to relations between those elements, then the network can be interpreted as learning semantic structure, superficially similar to a child learning the structure of his environment.
 
 We begin each trial by creating a random directed graph with a certain number of nodes, and use the HRR formalism to create a vector encoding of the graph, assigning each node an ID-vector and an HRR storing its outgoing edges. We present each ID-vector/HRR pairing to the network for 1 second of simulation time, allowing the network to change its connection weights. Keeping the analogy of a child learning semantic structure, we can think of this as the child having used context and the many other faculties at their disposal to determine the relations of some term to terms that it already knows (this is the creation of the structured HRR vectors). In presenting the pair to our network, the child's brain is attempting to store this structure in long-term memory.
 
-To assess the learned network, we check whether it has accurately encoded randomly selected edges from the graph it was trained on. This amounts to taking the HRR vector for the node at the tail of the edge, deconvolving it with the appropriate edge vector, and feeding the result into the trained network. If the trained network has learned the edge correctly, then it should output the HRR vector for the node at the head of the edge. The fact that the deconvolution is done offline, and not in neurons, is not an issue, as it has been shown elsewhere that spiking networks performing these operations can be learned using the PES rule \citep{Stewart2011a}. In principle, the HRR returned by the network could be used as new starting point, meaning entire paths through the random graph are encoded, though we do not test that here. 
+To assess the learned network, we check whether it has accurately encoded randomly selected edges from the graph it was trained on. This amounts to taking the HRR vector for the node at the tail of the edge, deconvolving it with the appropriate edge vector, and feeding the result into the trained network. If the trained network has learned the edge correctly, then it should output the HRR vector for the node at the head of the edge. The fact that the deconvolution is done offline, and not in neurons, is not an issue, as it has been shown elsewhere that spiking networks performing these operations can be learned using the PES rule \citep{Stewart2011a}. In principle, the HRR returned by the network could be recursively used as new starting point, meaning entire paths through the random graph are encoded, though we do not test that here.
+
+\begin{figure}[htb]
+\begin{center}
+%\includegraphics[width=0.5\textwidth]{../default_plots/edge_sim_plot_D_64_s_0.pdf}
+\includegraphics[height=55mm]{../default_plots/edge_sim_plot_D_64_s_0.pdf}
+%\includegraphics[width=\textwidth]{../diagrams/schematic.pdf}
+\end{center}
+\caption{Performance of the association network as the number of nodes in the encoded graph increases. For each number of vectors, 5 random graphs with that many nodes were created, 10 edges were chosen from each to test the network on. In all cases, output of the network is more similar to correct HRR vector than input vector was to the ID-vector it corresponds to. Importantly, increasing the number of nodes in the graph does appear to have a negative effect on performance. }
+\label{fig:results}
+\end{figure}
 
 \begin{figure*}[ht]
 \begin{center}
-\includegraphics[width=\textwidth]{../default_plots/example_plot_D_32_N_5.pdf}
+\includegraphics[width=\textwidth]{../default_plots/example_plot_D_64_N_5.png}
 \end{center}
-\caption{An example simulation. The network learns to associate 5 pairs of 64-dimensional vectors. Before 5 seconds is the training period, after 5 seconds is the testing period. The test vectors are noisy versions of the training vectors. (Top) Similarity of input to the 5 input vectors. (Second from top) Similarity of output to the 5 output vectors. (Second from bottom) Spike rasters of association neurons. (Bottom) Output vectors. Notice that during training, even though the input vector is noisy, the output is very similar to the correct output vector. Also notice that roughly the same set of neurons is active during presentation of the noisy vector during testing as is active during presentation of clean vector during training. There \textit{are} some extra neurons active during training, but generally those neurons have not been ``assigned'' to any other vector pair, and hence their decoders are still close to 0 and have essentially no effect on the output. Neurons that have been assigned to other vector pairs are generally inactive due to the increased selectivity caused by Oja's rule. }
+\caption{An example simulation. The network learns to associate 5 pairs of 64-dimensional vectors. Before 5 seconds is the training period, after 5 seconds is the testing period. The test vectors are noisy versions of the training vectors. (Top) Similarity of input to the 5 input vectors. (Second from top) Similarity of output to the 5 output vectors. (Second from bottom) Spike rasters of association neurons. (Bottom) Output vectors. During testing, even though input vector is noisy, output is very similar to the correct output vector. Also notice that roughly the same set of neurons is active during presentation of the noisy vector during testing as is active during presentation of clean vector during training. There \textit{are} some extra neurons active during training, but generally those neurons have not been ``assigned'' to any other vector pair, and hence their decoders are still close to 0 and have essentially no effect on the output. Neurons that have been assigned to other vector pairs are mostly inactive, due to the increased selectivity caused by Oja's rule.}
 \label{fig:example}
 \end{figure*}
 
 \section{Discussion}
 In this paper, we have presented a novel technique, using a Vector Symbolic Architecture and biologically plausible learning rules, whereby a network of spiking neurons can learn to encode semantic structure.
 
-\subsection{Scaling}
-As stated previously, one of the primary advantages of the ``hand-coded'' method of encoding structured knowledge, which the current work is based on, is its ability to scale up to large knowledge bases. Consequently, for the current work to count as an improvement upon that work, the scaling properties should be retained. While the significant additional computation introduced by the learning rules currently prevents us from running simulations where the network learns to encode a semantic network on the same scale as a human vocabulary, there is still reason to think that this technique would scale up adequately, if time and computational power permitted us to run the simulations. The main limiting factor in how many pairs can be stored is the dimensionality of the vectors; once there are too many vectors for a given dimensionality, the ID-vectors will be too similar to each other on average for even Algorithm \ref{alg:simple}, the abstract version of the algorithm. However, for any fixed dimensionality, our learning algorithm should arrive at a neural associative memory of similar quality as the abstract associative memory.
+As stated previously, one of the primary advantages of the ``hand-coded'' method of encoding structured knowledge, which the current work is based on, is its ability to scale up to large knowledge bases. Consequently, for the current work to count as an improvement upon that work, the scaling properties should be retained. While the significant additional computation introduced by the learning rules currently prevents us from running simulations where the network learns to encode a semantic network on the same scale as a human vocabulary, there is still reason to think that this technique should scale up adequately. The main limiting factor in how many pairs can be stored is the dimensionality of the vectors; once there are too many vectors for a given dimensionality, the ID-vectors will be too similar to each other even for the abstract version of the algorithm. However, for any fixed dimensionality, our learning algorithm should arrive at a neural associative memory of similar quality as the abstract associative memory, as long as the size of the association population is at least linear in the number of vectors we want to store, and the association population uses a sufficiently sparse representation initially.
 
-\subsection{Future Work}
-There are a number of possible avenues for improvement upon the work we have presented here, besides applying it to larger graphs. One interesting avenue would be to make the training conditions more similar to the conditions a child might be faced with in learning semantic structure. For instance, presenting each pair to the network a single time for 1 second is overly simplistic. It is more likely that a child learns semantic structure slowly, through repeated exposure \citep{Deak}; so one interesting line of inquiry could involve determining whether our technique still works under that condition. Additionally, in the current model we assume that all relations belonging to a given term (i.e. the entire HRR) are learned at once, which is also implausible. However, it is likely that our model will still learn in the same way if relations are presented one at a time; the PES rule should set the efferent weights of the relevant association population to an average of the vectors encoding the different relations, which is close to what we get when we present all the relations at once.
+There are a number of possible avenues for improvement upon the work we have presented here, besides applying it to larger graphs. One interesting avenue would be to make the training conditions more similar to the conditions a child might be faced with in learning semantic structure. For instance, presenting each pair to the network a single time is overly simplistic. It is more likely that a child learns semantic structure slowly, through repeated exposure \citep{Deak}; so it would be interesting to see if our technique still works under that condition. Additionally, in the current model we assume that all relations belonging to a given term are learned at once (i.e. we present the entire HRR), which is also implausible. However, it is likely that our model will still learn in the same way if relations are presented one at a time; the PES rule should set the efferent weights of the relevant association population to an average of the vectors encoding the different relations, which is close to what we get when we present all the relations at once.
 
-Another approach would be to try to bring the model into contact with empirical data, and, in particular, investigate whether more realistic training conditions can help the model account for certain empirically-established memory effects. For instance, there is reason to expect our model to be able to account for the well-known retroactive interference effect \citep{Levy-Gigi}, where recall of previously learned items which were learned in a context similar to recently learned items is impaired. If the ID-vectors in our model are taken to encode to this context, then when a new item is learned while an item with a similar context is still being recorded (i.e. has only received a few short training runs), it is a plausible hypothesis that, through Oja's rule, the new item will ``steal'' neurons from the incomplete item, rendering the incomplete item difficult or even impossible to access. Further simulations will be required to investigate these intriguing possibilities.
+Another avenue would be to try to bring the model into contact with empirical data, and, in particular, investigate whether more realistic training conditions can help the model account for certain empirically-established memory effects. For instance, there is reason to expect our model to be able to account for the well-known retroactive interference effect \citep{Levy-Gigi}, where recall of previously learned items which were learned in a context similar to recently learned items is impaired. If the ID-vectors in our model are taken to encode this context, then when a new item is learned while an item with a similar context is still being recorded, it is a plausible hypothesis that, through Oja's rule, the new item will ``steal'' neurons from the incomplete item, rendering the incomplete item impossible to access. Further simulations will be required to investigate these intriguing possibilities.
 
 %One shortcoming of our method is that there is a limit to the number of relations that can be stored in any given vector. This is a consequence of the fact the HRR's compress many vectors of a given dimension into a single vector of the same dimension; obviously if we try to stuff too many vectors into a single HRR, much of the information will be lost. This seems like an important shortcoming, since clearly it is possible to know quite a lot about a given subject; experts abound. Our answer to this challenge is that since our method is so efficient, it is possible to have many of these memories in the brain. Thus as one becomes an expert in a subject, their representations of items will become more fine-grained, all these subtle distinctions being offloaded to another memory in a separate part of the brain. This may explain the commonly observed phenomena that experts have larger brains and more neurons in brain areas that are known to be relevant to their area of expertise CITATION.
 
