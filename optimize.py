@@ -22,6 +22,13 @@ def make_objective(base_params, num_samples, num_vectors, num_tests, training_ti
         params = copy.deepcopy(base_params)
         params.oja_scale = kwargs['oja_scale']
         params.oja_learning_rate = kwargs['oja_learning_rate']
+        params.ensemble_params['intercepts'] = kwargs['ens_intercept']
+        params.cleanup_params['intercepts'] = kwargs['cleanup_intercept']
+        params.cleanup_params['radius'] = kwargs['radius']
+        params.tau_rc = kwargs['tau_rc']
+        params.tau_ref = kwargs['tau_ref']
+        params.ctau_rc = kwargs['ctau_rc']
+        params.ctau_ref = kwargs['ctau_ref']
         params.seed = kwargs['seed']
 
         mean_input_sims = []
@@ -136,8 +143,15 @@ if __name__ == "__main__":
 
     space = {
             'seed':hp.randint('seed', 1000000),
-            'oja_scale':hp.uniform('oja_scale', 0, 30),
-            'oja_learning_rate':hp.uniform('oja_learning_rate', 0.01, 1),
+            'oja_scale':hp.uniform('oja_scale', 1, 5),
+            'radius':hp.uniform('radius', .65, .75),
+            'oja_learning_rate':hp.uniform('oja_learning_rate', 0.01, 0.05),
+            'ens_intercept':hp.uniform('ens_intercept', 0.08, 0.15),
+            'cleanup_intercept':hp.uniform('cleanup_intercept', 0.09, 0.16),
+            'tau_rc':hp.uniform('tau_rc', 0.08, 0.14),
+            'tau_ref':hp.uniform('tau_ref', 0.003, 0.005),
+            'ctau_rc':hp.uniform('ctau_rc', 0.25, 0.4),
+            'ctau_ref':hp.uniform('ctau_ref', 0.002, 0.005),
             }
 
     then = time.time()
@@ -167,5 +181,5 @@ if __name__ == "__main__":
 
 
     for p in workers:
-        p.terminate()
+       p.terminate()
 
