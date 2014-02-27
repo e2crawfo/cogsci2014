@@ -2,7 +2,7 @@ import pickle
 import nengo
 import numpy as np
 from mytools import extract_probe_data, fh, cu
-from build import build_learning_cleanup, build_cleanup_oja, build_cleanup_pes
+from build import build_cleanup_oja, build_cleanup_pes
 
 import logging
 logging.getLogger(__name__)
@@ -24,20 +24,20 @@ class LearnableAssociationNetwork(object):
         self.stored_func = lambda x: x
         self.address_func = lambda x: x
         self.model = None
-        self.parameters = None
+        self.params = None
 
     def set_parameters(self, p):
-        self.parameters = p
+        self.params = p
 
     def set_vectorized_graph(self, vg):
         self.vectorized_graph = vg
 
     def build(self):
-        if self.parameters is None:
+        if self.params is None:
             print "Can't build, parameters not set"
             return
 
-        self._build(**self.parameters.__dict__)
+        self._build(**self.params.__dict__)
 
     def _build(self, seed, dim, DperE, NperD, cleanup_n, cleanup_params, ensemble_params,
                   oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate,
@@ -54,7 +54,7 @@ class LearnableAssociationNetwork(object):
         print "Building..."
         model = nengo.Model("Learn cleanup", seed=seed)
 
-        print self.parameters.__dict__
+        print self.params.__dict__
 
         def make_func(obj, funcname):
             def g(t):
@@ -152,7 +152,7 @@ class LearnableAssociationNetwork(object):
             self.simulator.reset()
 
         self.address_func = address_func
-        self.stored_func = lambda x: np.zeros(self.parameters.dim)
+        self.stored_func = lambda x: np.zeros(self.params.dim)
         self.gate_func = lambda x: [1.0]
         self.learn_func = lambda x: False
 
@@ -183,14 +183,14 @@ class LearnableAssociationNetwork(object):
                       for conn in output_connections}
 
         with open(fname, 'wb') as f:
-            pickle.dump((self.parameters, weights, decoders, self.vectorized_graph), f)
+            pickle.dump((self.params, weights, decoders, self.vectorized_graph), f)
 
 
     def load_learned_data(self, fname):
         try:
             with open(fname, 'rb') as f:
                 ret = pickle.load(f)
-                self.parameters = ret[0]
+                self.params = ret[0]
                 self.build()
                 self.oja_connection_weights = ret[1]
                 self.pes_decoders = ret[2]
