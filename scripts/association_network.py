@@ -19,7 +19,6 @@ class LearnableAssociationNetwork(object):
         self.has_learned = False
         self.oja_connection_weights = None
         self.pes_decoders = None
-        self.learned_loaded = False
         self.simulator = None
 
         self.stored_func = lambda x: x
@@ -104,6 +103,10 @@ class LearnableAssociationNetwork(object):
         if self.has_learned:
             print "Learning already complete."
             return
+
+        if not self.model:
+            print "Cannot learn, model hasn't been created."
+            return None
 
         self.address_func = address_func
         self.stored_func = stored_func
@@ -193,15 +196,11 @@ class LearnableAssociationNetwork(object):
                 self.pes_decoders = ret[2]
                 self.vectorized_graph = ret[3]
                 self.has_learned = True
-                self.learning_loaded = True
         except Exception as E:
-            print E
             print "Couldn't load."
-            return None
-
+            print E
 
     def extract_data(self):
-
         simulator = self.simulator
         t = self.simulator.trange()
 
