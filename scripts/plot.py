@@ -88,7 +88,7 @@ def load_simulation_data(fname, data):
             if key == 't':
                 filedata[key] += data[key][-1] + data[key][1]
 
-            if key in data:
+            if key in data and isinstance(data[key], np.ndarray) and isinstance(filedata[key], np.ndarray):
                 data[key] = np.concatenate((data[key], filedata[key]), axis=0)
             else:
                 data[key] = filedata[key]
