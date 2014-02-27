@@ -3,33 +3,26 @@ from association_network import LearnableAssociationNetwork, Parameters
 from vectorized_graph import VectorizedGraph
 import logging
 import pickle
-from mytools import cu
 
+def learn(data_fname, model_fname, params, simple=False):
 
-def learn(data_fname, model_fname, params, num_vectors, training_time, simple=False):
-
-    logging.basicConfig(filename='log/'+data_fname.split('/')[-1]+'.log')
-
-    cleanup_n = params.neurons_per_vector * num_vectors
+    cleanup_n = params.neurons_per_vector * params.num_vectors
     params.cleanup_n = cleanup_n
-    prob, cleanup_intercept = \
-            cu.minimum_threshold(0.5, params.neurons_per_vector/2, cleanup_n, params.dim)
-    params.cleanup_params['intercepts'] = [cleanup_intercept]
 
     lan = LearnableAssociationNetwork()
     lan.set_parameters(params)
 
-    vg = VectorizedGraph(params.dim, num_vectors, params.seed, simple, save=True, draw=True)
+    vg = VectorizedGraph(params.dim, params.num_vectors, params.seed, simple, save=True, draw=True)
     lan.set_vectorized_graph(vg)
 
     lan.build()
-    sim_length, address_func, stored_func = vg.training_schedule(training_time)
+    sim_length, address_func, stored_func = vg.training_schedule(params.training_time)
     lan.learn(sim_length, address_func, stored_func)
 
     lan.save_learned_data(model_fname)
 
     data = lan.extract_data()
-    data['vg'] = vg
+
     with open(data_fname, 'wb') as f:
         pickle.dump(data, f)
 

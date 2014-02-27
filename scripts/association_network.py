@@ -1,7 +1,7 @@
 import pickle
 import nengo
 import numpy as np
-from mytools import extract_probe_data, fh
+from mytools import extract_probe_data, fh, cu
 from build import build_learning_cleanup, build_cleanup_oja, build_cleanup_pes
 
 import logging
@@ -46,6 +46,11 @@ class LearnableAssociationNetwork(object):
 
         num_ensembles = int(dim / DperE)
         NperE = NperD * DperE
+
+        if cleanup_params['intercepts'] is None:
+            prob, cleanup_intercept = \
+                    cu.minimum_threshold(0.5, params.neurons_per_vector/2, cleanup_n, params.dim)
+            cleanup_params['intercepts'] = [cleanup_intercept]
 
         print "Building..."
         model = nengo.Model("Learn cleanup", seed=seed)
