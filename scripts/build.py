@@ -22,8 +22,8 @@ def build_learning_cleanup(dim, num_vectors, neurons_per_vector,
     return cleanup
 
 def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
-                      ensemble_params, learning_rate, oja_scale, encoders=None,
-                      pre_decoders=None, use_oja=True, pre_tau=0.03, post_tau=0.03,
+                      ensemble_params, learning_rate, oja_scale, tau_ref=0.002, tau_rc=0.02,
+                      encoders=None, pre_decoders=None, use_oja=True, pre_tau=0.03, post_tau=0.03,
                       end_time=None, learn=None):
 
     NperE = NperD * DperE
@@ -31,10 +31,12 @@ def build_cleanup_oja(model, inn, cleanup, DperE, NperD, num_ensembles,
 
     # ----- Make Nodes -----
     pre_ensembles = []
+    neurons = nengo.LIF(NperE, tau_ref=tau_ref, tau_rc=tau_rc)
     for i in range(num_ensembles):
-        pre_ensembles.append(nengo.Ensemble(label='pre_'+str(i), neurons=nengo.LIF(NperE),
-                            dimensions=DperE,
-                            **ensemble_params))
+        pre_ensembles.append(nengo.Ensemble(label='pre_'+str(i),
+                                            neurons=neurons,
+                                            dimensions=DperE,
+                                            **ensemble_params))
 
     # ----- Get decoders for pre populations. We use them to initialize the connection weights
     if pre_decoders is None:

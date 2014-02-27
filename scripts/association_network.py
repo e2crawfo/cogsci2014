@@ -41,7 +41,8 @@ class LearnableAssociationNetwork(object):
         self._build(**self.parameters.__dict__)
 
     def _build(self, seed, dim, DperE, NperD, cleanup_n, cleanup_params, ensemble_params,
-                  oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate, **kwargs):
+                  oja_learning_rate, oja_scale, pre_tau, post_tau, pes_learning_rate,
+                  ctau_ref=0.002, ctau_rc=0.02, tau_ref=0.002, tau_rc=0.02, **kwargs):
 
         num_ensembles = int(dim / DperE)
         NperE = NperD * DperE
@@ -67,13 +68,14 @@ class LearnableAssociationNetwork(object):
 
         # ----- Build neural part -----
         #cleanup = build_training_cleanup(dim, num_vectors, neurons_per_vector, intercept=intercept)
-        cleanup = nengo.Ensemble(label='cleanup', neurons=nengo.LIF(cleanup_n),
+        cleanup_neurons = nengo.LIF(cleanup_n, tau_rc=ctau_rc, tau_ref=ctau_ref)
+        cleanup = nengo.Ensemble(label='cleanup', neurons=cleanup_neurons,
                               dimensions=dim, **cleanup_params)
 
         pre_ensembles, pre_decoders, pre_connections = \
                 build_cleanup_oja(model, address_input, cleanup, DperE, NperD, num_ensembles,
                                   ensemble_params, oja_learning_rate, oja_scale,
-                                  learn=make_func(self, "learn_func"))
+                                  tau_ref, tau_rc, learn=make_func(self, "learn_func"))
 
         output_ensembles, error_ensembles = \
                 build_cleanup_pes(cleanup, stored_input, DperE, NperD, num_ensembles, pes_learning_rate)
