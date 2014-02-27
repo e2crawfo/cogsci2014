@@ -113,11 +113,11 @@ def simulation_plot(plot_fname, learning_fname='', testing_fname='', show=False)
     mpl.rcParams['lines.linewidth'] = 1.0
     mpl.rc('font', size=6)
 
-    show_sims = 'vg' in data
+    show_sims = 'vectorized_graph' in data
     if show_sims:
         num_plots += 2
 
-        vg = data['vg']
+        vg = data['vectorized_graph']
         def make_sim_func(h):
             def sim(vec):
                 return h.compare(hrr.HRR(data=vec))
@@ -144,12 +144,11 @@ def simulation_plot(plot_fname, learning_fname='', testing_fname='', show=False)
         plt.axhline(y = 1.0, color='black', linestyle='--', zorder=0)
         plt.ylabel("Similarity")
 
-    #ax, offset = nengo_plot_helper(offset, t, data['address_input'], yticks=[])
-    #ax, offset = nengo_plot_helper(offset, t, data['stored_input'], yticks=[])
-    #ax, offset = nengo_plot_helper(offset, t, data['pre_decoded'], yticks=[])
+    num_vectors = data['params'].num_vectors
     testing_time = data['testing_time'] * data['num_tests'] * 1000
-    cleanup_spikes = spike_sorter(data['cleanup_spikes'], data['num_vectors'] + 1,
+    cleanup_spikes = spike_sorter(data['cleanup_spikes'], num_vectors + 1,
                         slice=np.index_exp[:-testing_time,:], binsize=20)
+
     ax, offset = nengo_plot_helper(offset, t, cleanup_spikes, spikes=True, yticks=[])
     plt.ylabel("neuron #")
     ax, offset = nengo_plot_helper(offset, t, data['output_decoded'], yticks=[], removex=False)

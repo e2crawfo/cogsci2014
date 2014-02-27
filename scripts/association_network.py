@@ -212,7 +212,8 @@ class LearnableAssociationNetwork(object):
 
         return dict(t=t, address_input=address_input, stored_input=stored_input,
                       pre_decoded=pre_decoded, cleanup_spikes=cleanup_spikes,
-                      output_decoded=output_decoded)
+                      output_decoded=output_decoded, params=self.params,
+                      vectorized_graph=self.vectorized_graph)
 
 
 

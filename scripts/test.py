@@ -24,7 +24,6 @@ def test_edges(in_fname, out_fname, testing_time, num_tests, order=None):
     data['correct_vectors'] = correct_vectors
     data['testing_time'] = testing_time
     data['num_tests'] = num_tests
-    data['num_vectors'] = vg.G.number_of_nodes()
 
     with open(out_fname, 'wb') as f:
         pickle.dump(data, f)
