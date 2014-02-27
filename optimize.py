@@ -6,20 +6,19 @@ import argparse
 import os
 import sys
 import numpy as np
-from scipy import stats
 from mytools import fh
 from scripts import association_network
 
-def make_objective(base_params, num_samples, num_vectors, num_tests, training_time, testing_time):
+def make_objective(base_params, num_samples, num_tests, testing_time):
     import copy
     from mytools import fh
     from scripts import learn, test, analyze
     from hyperopt import STATUS_OK
     import numpy as np
     from scipy import stats
-    def objective(kwargs):
+    params = copy.deepcopy(base_params)
 
-        params = copy.deepcopy(base_params)
+    def objective(kwargs):
         params.oja_scale = kwargs['oja_scale']
         params.oja_learning_rate = kwargs['oja_learning_rate']
         params.ensemble_params['intercepts'] = kwargs['ens_intercept']
@@ -35,11 +34,15 @@ def make_objective(base_params, num_samples, num_vectors, num_tests, training_ti
         mean_output_sims = []
 
         for i in range(num_samples):
-            data_fname = fh.make_filename('training', config_dict=params.__dict__, use_time=True)
-            model_fname = fh.make_filename('models', config_dict=params.__dict__, use_time=True)
-            test_fname = fh.make_filename('tests', config_dict=params.__dict__, use_time=True)
+            dr = '/data/e2crawfo/cleanuplearning/opt'
+            data_fname = fh.make_filename('training', directory=dr,
+                    config_dict=params.__dict__, use_time=True)
+            model_fname = fh.make_filename('models', directory=dr,
+                    config_dict=params.__dict__, use_time=True)
+            test_fname = fh.make_filename('tests', directory=dr,
+                    config_dict=params.__dict__, use_time=True)
 
-            learn.learn(data_fname, model_fname, params, num_vectors, training_time, simple='simple2')
+            learn.learn(data_fname, model_fname, params, simple='simple2')
             test.test_edges(model_fname, test_fname, testing_time, num_tests)
 
             analysis = analyze.analyze_edge_test_similarity(test_fname)
@@ -47,10 +50,16 @@ def make_objective(base_params, num_samples, num_vectors, num_tests, training_ti
 
             mean_input_sims.append(np.mean(input_sims))
             mean_output_sims.append(np.mean(output_sims))
+            params.seed += 1
+
+        mean_input_sims = np.array(mean_input_sims)
+        mean_output_sims = np.array(mean_output_sims)
+
+        losses = mean_input_sims - mean_output_sims
 
         return {
-            'loss': -np.mean(mean_output_sims),
-            'loss_variance': stats.sem(mean_output_sims),
+            'loss': np.mean(losses),
+            'loss_variance': stats.sem(losses),
             'status': STATUS_OK,
             }
 
@@ -79,30 +88,28 @@ if __name__ == "__main__":
 
     argvals = parser.parse_args()
 
-    dim = 8
-    DperE = 8
-
     num_samples = 5
-    num_vectors = 10
     num_tests = 10
-    training_time = 1.0
     testing_time = 0.5
 
     params = association_network.Parameters(
-                    dim=dim,
-                    DperE=DperE,
-                    neurons_per_vector = 20,
-                    NperD = 30,
+                    dim=64,
+                    DperE=64,
+                    neurons_per_vector = 30,
+                    num_vectors=10,
+                    NperD = 50,
                     pre_tau = 0.03,
                     post_tau = 0.03,
+                    training_time = 1.0,
                     pes_learning_rate = np.true_divide(1,1),
                     cleanup_params = {'radius':1.0,
-                                       'max_rates':[400],
-                                       'intercepts':[0.1]},
-                    ensemble_params = {'radius':np.sqrt(np.true_divide(DperE, dim)),
-                                       'max_rates':[400],
+                                       'max_rates':[200],
                                        'intercepts':[0.1]},
                     )
+
+    params.ensemble_params = {'radius':np.sqrt(np.true_divide(params.DperE, params.dim)),
+                              'max_rates':[200],
+                              'intercepts':[0.1]}
 
     num_mongo_workers = max(argvals.mongo_workers, 1)
 
@@ -117,8 +124,7 @@ if __name__ == "__main__":
             return f
         objective = make_f()
     else:
-        objective = make_objective(params, num_samples, num_vectors, num_tests,
-                                    training_time, testing_time)
+        objective = make_objective(params, num_samples, num_tests, testing_time)
 
     trials = MongoTrials('mongo://localhost:1234/assoc/jobs', exp_key=exp_key)
     print "Trials: " + str(trials.trials) + "\n"
@@ -126,10 +132,18 @@ if __name__ == "__main__":
     print "Losses: " + str(trials.losses()) + "\n"
     print "Statuses: " + str(trials.statuses()) + "\n"
 
+    if trials:
+        best = min(trials.trials, key=lambda x: x[u'result'].get(u'loss', 1000))
+
+        print "Best: "
+        print "Result: ", best[u'result']
+        print "Vals: ", best[u'misc'][u'vals']
+
+
     worker_call_string = \
         ["hyperopt-mongo-worker",
         "--mongo=localhost:1234/assoc",
-        "--max-consecutive-failures","2",
+        "--max-consecutive-failures","4",
         "--reserve-timeout", "2.0",
         #"--workdir","~/cogsci2014/",
         ]
@@ -163,7 +177,6 @@ if __name__ == "__main__":
         max_evals=20,
         trials=trials)
     print "Done fMin"
-    print "Best: ", best
 
     now = time.time()
 
