@@ -1,7 +1,6 @@
-Pycluster==1.52
-argparse==1.2.1
-distribute==0.6.34
 doit==0.24.0
-ipython==1.1.0
--e git+https://github.com/ctn-waterloo/nengo.git@a1138692e48775ba29841c8a31252bfd1e720bfe#egg=nengo-dev
-wsgiref==0.1.2
+-e git+https://github.com/ctn-waterloo/nengo.git@cleanup_learning#egg=nengo
+-e git+https://github.com/e2crawfo/mytools.git#egg=mytools
+networkx==1.8.1
+q==2.4
+hyperopt==0.0.2
